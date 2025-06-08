@@ -1,0 +1,13 @@
+{
+  "name": "agente-logistica-ia-monorepo",
+  "private": true,
+  "scripts": {
+    "dev:ui": "pnpm --filter ui-web dev",
+    "dev:api": "pnpm --filter orchestrator-api dev",
+    "build": "pnpm -r build",
+    "type-check": "pnpm -r type-check"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

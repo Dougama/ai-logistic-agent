@@ -1,0 +1,28 @@
+# Dependencias
+node_modules/
+.pnp.*
+.npm
+
+# Archivos de build y logs
+dist/
+build/
+.next/
+out/
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Entorno y Secretos
+.env
+.env.local
+.env.*.local
+*.env
+
+# Cache de SO y editores
+.DS_Store
+Thumbs.db
+.vscode/
+
+# TypeScript
+*.tsbuildinfo
