@@ -1,8 +1,9 @@
 # Dependencias
 node_modules/
 .pnp.*
-.npm
-
+.npm/
+.terraform/
+.terraform.*
 # Archivos de build y logs
 dist/
 build/
