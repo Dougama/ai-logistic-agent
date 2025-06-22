@@ -2,9 +2,23 @@
   "name": "indexer-service",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/index.js",
+  "main": "build/index.js",
   "scripts": {
     "build": "tsc",
-    "type-check": "tsc --noEmit"
+    "start": "functions-framework --target=pdfIndexer",
+    "deploy": "gcloud functions deploy pdfIndexer --gen2 --runtime=nodejs20 --trigger-event-filters=\"type=google.cloud.storage.object.v1.finalized\" --trigger-event-filters-path-pattern=\"bucket=ia-agent\" --source=. --entry-point=pdfIndexer --region=us-central1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/pdf-parse": "^1.1.5",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.1",
+    "@google-cloud/functions-framework": "^4.0.0",
+    "@google-cloud/storage": "^7.16.0",
+    "@google/genai": "^1.5.1",
+    "gpt-tokenizer": "^3.0.1",
+    "pdf-parse": "^1.1.1"
   }
 }
