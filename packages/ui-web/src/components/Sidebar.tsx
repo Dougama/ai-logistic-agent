@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// packages/ui-web/src/components/Sidebar.tsx
+import React, { useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 import {
@@ -34,6 +35,10 @@ interface SidebarProps {
   onSelectChat: (chatId: string) => void;
   onNewChat: () => void;
   activeChatId: string | null;
+  chats: ChatSummary[];
+  setChats: React.Dispatch<React.SetStateAction<ChatSummary[]>>;
+  onDeleteChat: (chatId: string) => void;
+  onRefreshChats: () => void;
 }
 
 const PAGE_SIZE = 6;
@@ -42,12 +47,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectChat,
   onNewChat,
   activeChatId,
+  chats,
+  setChats,
+  onDeleteChat,
+  onRefreshChats,
 }) => {
   // Estados del componente
-  const [chats, setChats] = useState<ChatSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(true);
 
   useEffect(() => {
     const fetchInitialChats = async () => {
@@ -67,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
     };
     fetchInitialChats();
-  }, []);
+  }, [setChats]);
 
   const handleLoadMore = async () => {
     if (isLoadingMore || !hasMore || chats.length === 0) return;
@@ -108,13 +116,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         throw new Error("No se pudo eliminar el chat.");
       }
 
-      setChats((prevChats) =>
-        prevChats.filter((chat) => chat.id !== chatIdToDelete)
-      );
-
-      if (activeChatId === chatIdToDelete) {
-        onNewChat();
-      }
+      // Llamamos a la función del padre para actualizar el estado
+      onDeleteChat(chatIdToDelete);
     } catch (error) {
       console.error("Error al eliminar el chat:", error);
       alert("Hubo un error al intentar eliminar la conversación.");

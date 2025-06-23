@@ -1,3 +1,4 @@
+// packages/ui-web/src/pages/ChatLayout.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { ChatMessage } from "shared-types";
 import { Sidebar } from "../components/Sidebar";
@@ -17,6 +18,16 @@ import { useDisclosure } from "@mantine/hooks";
 import { useAuth } from "../context/AuthContext";
 import { IconRobot, IconBolt } from "@tabler/icons-react";
 
+// Interfaz para los chats del sidebar
+interface ChatSummary {
+  id: string;
+  title: string;
+  lastUpdatedAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+}
+
 export const ChatLayout: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -24,6 +35,10 @@ export const ChatLayout: React.FC = () => {
   const [isReplying, setIsReplying] = useState<boolean>(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
+
+  // Estado para manejar los chats del sidebar
+  const [chats, setChats] = useState<ChatSummary[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,6 +70,35 @@ export const ChatLayout: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Función para actualizar la lista de chats
+  const refreshChats = async () => {
+    const userId = currentUser?.uid;
+    if (!userId) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/chat/user/${userId}`);
+      const data: ChatSummary[] = await res.json();
+      setChats(data);
+    } catch (error) {
+      console.error("Error al cargar los chats:", error);
+    }
+  };
+
+  // Función para crear un nuevo chat y agregarlo inmediatamente a la lista
+  const addNewChat = (newChatData: { id: string; title: string }) => {
+    const newChat: ChatSummary = {
+      id: newChatData.id,
+      title: newChatData.title,
+      lastUpdatedAt: {
+        _seconds: Math.floor(Date.now() / 1000),
+        _nanoseconds: 0,
+      },
+    };
+
+    // Agregamos el nuevo chat al principio de la lista
+    setChats((prevChats) => [newChat, ...prevChats]);
+  };
+
   const handleSendMessage = async (text: string) => {
     const userMessage: ChatMessage = {
       id: `user_${Date.now()}`,
@@ -85,8 +129,19 @@ export const ChatLayout: React.FC = () => {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      if (!activeChatId) {
+      // Si es un chat nuevo, actualizamos el estado y agregamos a la lista
+      if (!activeChatId && assistantResponse.chatId) {
         setActiveChatId(assistantResponse.chatId);
+
+        // Generamos un título basado en el primer mensaje del usuario
+        const chatTitle =
+          text.length > 50 ? text.substring(0, 50) + "..." : text;
+
+        // Agregamos el nuevo chat a la lista inmediatamente
+        addNewChat({
+          id: assistantResponse.chatId,
+          title: chatTitle,
+        });
       }
     } catch (error) {
       console.error("Error al contactar con el backend:", error);
@@ -103,6 +158,14 @@ export const ChatLayout: React.FC = () => {
   const handleNewChat = () => {
     setActiveChatId(null);
     toggleMobile();
+  };
+
+  // Función para eliminar un chat de la lista local
+  const handleDeleteChat = (chatId: string) => {
+    setChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
+    if (activeChatId === chatId) {
+      setActiveChatId(null);
+    }
   };
 
   return (
@@ -186,6 +249,10 @@ export const ChatLayout: React.FC = () => {
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
           activeChatId={activeChatId}
+          chats={chats}
+          setChats={setChats}
+          onDeleteChat={handleDeleteChat}
+          onRefreshChats={refreshChats}
         />
       </AppShell.Navbar>
 
