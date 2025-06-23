@@ -4,23 +4,19 @@ import { auth } from "../firebaseConfig";
 import {
   Stack,
   Button,
-  ScrollArea,
   Text,
   Group,
   ActionIcon,
+  ScrollArea,
   Divider,
   Box,
-  Badge,
   Tooltip,
-  Avatar,
 } from "@mantine/core";
 import {
   IconPlus,
-  IconLogout,
   IconTrash,
+  IconLogout,
   IconMessage,
-  IconTruck,
-  IconUser,
 } from "@tabler/icons-react";
 
 // Interfaz para los datos que vienen del backend
@@ -47,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNewChat,
   activeChatId,
 }) => {
+  // Estados del componente
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -102,7 +99,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     try {
       const response = await fetch(
         `http://localhost:8080/chat/${chatIdToDelete}`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+        }
       );
 
       if (!response.ok) {
@@ -130,190 +129,127 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const formatChatTitle = (title: string) => {
-    return title.length > 25 ? `${title.substring(0, 25)}...` : title;
-  };
-
   return (
-    <Stack h="100%" justify="space-between" p={0}>
-      {/* Header del Sidebar */}
-      <Box>
-        <Group p="md" justify="space-between">
-          <Group>
-            <IconTruck
-              size={24}
-              color="var(--mantine-color-logisticsPrimary-6)"
-            />
-            <Text fw={600} size="sm" c="logisticsPrimary.6">
-              LogiBot IA
+    <Box h="100%" style={{ display: "flex", flexDirection: "column" }}>
+      {/* Header con botón de nuevo chat */}
+      <Button
+        leftSection={<IconPlus size={16} />}
+        onClick={onNewChat}
+        variant="light"
+        fullWidth
+        mb="md"
+      >
+        Nuevo Chat
+      </Button>
+
+      <Divider mb="md" />
+
+      {/* Lista de chats scrolleable */}
+      <ScrollArea style={{ flex: 1 }} type="hover">
+        <Stack gap="xs">
+          {isLoading ? (
+            <Text ta="center" c="dimmed" size="sm">
+              Cargando chats...
             </Text>
-          </Group>
-          <Badge variant="light" color="logisticsAccent" size="xs">
-            Beta
-          </Badge>
-        </Group>
-
-        <Box px="md" pb="md">
-          <Button
-            onClick={onNewChat}
-            fullWidth
-            leftSection={<IconPlus size={18} />}
-            variant="gradient"
-            gradient={{ from: "logisticsPrimary.6", to: "logisticsPrimary.8" }}
-            radius="md"
-            size="sm"
-            style={{
-              boxShadow: "0 2px 8px rgba(33, 150, 243, 0.2)",
-            }}
-          >
-            Nueva Consulta
-          </Button>
-        </Box>
-
-        <Divider />
-
-        {/* Lista de Chats */}
-        <ScrollArea style={{ height: "calc(100vh - 200px)" }} p="md">
-          <Stack gap="xs">
-            {isLoading ? (
-              <Text c="dimmed" size="sm" ta="center" py="xl">
-                Cargando conversaciones...
-              </Text>
-            ) : chats.length === 0 ? (
-              <Box ta="center" py="xl">
-                <IconMessage size={48} color="var(--mantine-color-gray-4)" />
-                <Text c="dimmed" size="sm" mt="md">
-                  No hay conversaciones aún
-                </Text>
-              </Box>
-            ) : (
-              chats.map((chat) => (
-                <Group
-                  key={chat.id}
-                  p="sm"
-                  style={{
-                    borderRadius: "var(--mantine-radius-md)",
-                    cursor: "pointer",
-                    backgroundColor:
-                      chat.id === activeChatId
-                        ? "var(--mantine-color-logisticsPrimary-0)"
-                        : "transparent",
-                    border:
-                      chat.id === activeChatId
-                        ? "1px solid var(--mantine-color-logisticsPrimary-3)"
-                        : "1px solid transparent",
-                    transition: "all 0.2s ease",
-                  }}
-                  onClick={() => onSelectChat(chat.id)}
-                  onMouseEnter={(e) => {
-                    if (chat.id !== activeChatId) {
-                      e.currentTarget.style.backgroundColor =
-                        "var(--mantine-color-gray-0)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (chat.id !== activeChatId) {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                    }
-                  }}
-                  justify="space-between"
-                  wrap="nowrap"
-                >
-                  <Group style={{ flex: 1, minWidth: 0 }}>
-                    <IconMessage
-                      size={16}
-                      color={
-                        chat.id === activeChatId
-                          ? "var(--mantine-color-logisticsPrimary-6)"
-                          : "var(--mantine-color-gray-6)"
-                      }
-                    />
-                    <Text
-                      size="sm"
-                      style={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        color:
-                          chat.id === activeChatId
-                            ? "var(--mantine-color-logisticsPrimary-8)"
-                            : "inherit",
-                        fontWeight: chat.id === activeChatId ? 500 : 400,
-                      }}
-                    >
-                      {formatChatTitle(chat.title)}
-                    </Text>
-                  </Group>
-
-                  <Tooltip label="Eliminar conversación">
-                    <ActionIcon
-                      size="sm"
-                      variant="subtle"
-                      color="red"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteChat(chat.id);
-                      }}
-                      style={{
-                        opacity: 0.6,
-                        transition: "opacity 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.opacity = "1";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = "0.6";
-                      }}
-                    >
-                      <IconTrash size={14} />
-                    </ActionIcon>
-                  </Tooltip>
-                </Group>
-              ))
-            )}
-
-            {!isLoading && hasMore && (
-              <Button
-                onClick={handleLoadMore}
-                loading={isLoadingMore}
-                variant="subtle"
-                size="sm"
-                color="gray"
-                fullWidth
-                mt="sm"
+          ) : chats.length === 0 ? (
+            <Text ta="center" c="dimmed" size="sm">
+              No hay conversaciones aún
+            </Text>
+          ) : (
+            chats.map((chat) => (
+              <Group
+                key={chat.id}
+                gap="xs"
+                p="sm"
+                style={{
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  backgroundColor:
+                    chat.id === activeChatId
+                      ? "var(--mantine-color-blue-light)"
+                      : "transparent",
+                  border:
+                    chat.id === activeChatId
+                      ? "1px solid var(--mantine-color-blue-6)"
+                      : "1px solid transparent",
+                  transition: "all 0.2s ease",
+                }}
+                onClick={() => onSelectChat(chat.id)}
               >
-                {isLoadingMore ? "Cargando..." : "Ver más conversaciones"}
-              </Button>
-            )}
-          </Stack>
-        </ScrollArea>
-      </Box>
+                {/* Icono de mensaje */}
+                <IconMessage
+                  size={16}
+                  style={{
+                    flexShrink: 0,
+                    color:
+                      chat.id === activeChatId
+                        ? "var(--mantine-color-blue-6)"
+                        : "var(--mantine-color-gray-6)",
+                  }}
+                />
 
-      {/* Footer del Sidebar */}
-      <Box>
-        <Divider />
-        <Group p="md" justify="space-between">
-          <Group>
-            <Avatar size="sm" color="logisticsPrimary">
-              <IconUser size={16} />
-            </Avatar>
-            <Text size="sm" fw={500}>
-              {auth.currentUser?.email?.split("@")[0] || "Usuario"}
-            </Text>
-          </Group>
+                {/* Texto del chat con overflow controlado */}
+                <Text
+                  size="sm"
+                  style={{
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    minWidth: 0, // Importante para que funcione el ellipsis
+                  }}
+                  c={chat.id === activeChatId ? "blue.6" : "gray.7"}
+                >
+                  {chat.title}
+                </Text>
 
-          <Tooltip label="Cerrar sesión">
-            <ActionIcon
-              onClick={handleLogout}
-              color="red"
+                {/* Botón de eliminar con tooltip */}
+                <Tooltip label="Eliminar conversación" position="top">
+                  <ActionIcon
+                    size="sm"
+                    variant="subtle"
+                    color="red"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteChat(chat.id);
+                    }}
+                    style={{ flexShrink: 0 }}
+                  >
+                    <IconTrash size={14} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            ))
+          )}
+
+          {/* Botón de cargar más */}
+          {!isLoading && hasMore && (
+            <Button
               variant="subtle"
               size="sm"
+              onClick={handleLoadMore}
+              loading={isLoadingMore}
+              fullWidth
             >
-              <IconLogout size={16} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
+              {isLoadingMore ? "Cargando..." : "Ver más"}
+            </Button>
+          )}
+        </Stack>
+      </ScrollArea>
+
+      {/* Footer con botón de cerrar sesión */}
+      <Box mt="md">
+        <Divider mb="md" />
+        <Button
+          leftSection={<IconLogout size={16} />}
+          onClick={handleLogout}
+          variant="light"
+          color="red"
+          fullWidth
+        >
+          Cerrar Sesión
+        </Button>
       </Box>
-    </Stack>
+    </Box>
   );
 };

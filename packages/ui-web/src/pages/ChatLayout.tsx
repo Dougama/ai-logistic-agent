@@ -3,9 +3,19 @@ import { ChatMessage } from "shared-types";
 import { Sidebar } from "../components/Sidebar";
 import { MessageInputForm } from "../components/MessageInputForm";
 import { MessageBubble } from "../components/MessageBubble";
-import { AppShell, Burger, Group, Title } from "@mantine/core";
+import {
+  AppShell,
+  Burger,
+  Group,
+  Title,
+  Text,
+  Box,
+  Badge,
+  Flex,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useAuth } from "../context/AuthContext";
+import { IconRobot, IconBolt } from "@tabler/icons-react";
 
 export const ChatLayout: React.FC = () => {
   const { currentUser } = useAuth();
@@ -27,7 +37,7 @@ export const ChatLayout: React.FC = () => {
       setIsHistoryLoading(false);
       return;
     }
-    // TODO: Usar el ID del usuario real desde el AuthContext
+
     fetch(`http://localhost:8080/chat/${activeChatId}/messages`)
       .then((res) => res.json())
       .then((data) => {
@@ -87,34 +97,87 @@ export const ChatLayout: React.FC = () => {
 
   const handleSelectChat = (chatId: string) => {
     setActiveChatId(chatId);
-    toggleMobile(); // Cerramos el menú al seleccionar un chat en móvil
+    toggleMobile();
   };
 
   const handleNewChat = () => {
     setActiveChatId(null);
-    toggleMobile(); // Cerramos el menú al crear un chat nuevo en móvil
+    toggleMobile();
   };
 
   return (
     <AppShell
       padding="md"
-      header={{ height: 60 }}
+      header={{ height: 70 }}
       navbar={{
         width: 300,
-        breakpoint: "sm", // El sidebar se ocultará en pantallas más pequeñas que 'sm' (small)
+        breakpoint: "sm",
         collapsed: { mobile: !mobileOpened },
       }}
     >
-      <AppShell.Header>
-        <Group h="100%" px="md">
-          {/* El botón de hamburguesa solo es visible en pantallas más pequeñas que 'sm' */}
-          <Burger
-            opened={mobileOpened}
-            onClick={toggleMobile}
-            hiddenFrom="sm"
+      <AppShell.Header
+        style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          borderBottom: "none",
+        }}
+      >
+        <Group h="100%" px="md" justify="space-between">
+          <Group>
+            <Burger
+              opened={mobileOpened}
+              onClick={toggleMobile}
+              hiddenFrom="sm"
+              size="sm"
+              color="white"
+            />
+
+            <Flex align="center" gap="sm">
+              <Box
+                style={{
+                  background: "rgba(255, 255, 255, 0.2)",
+                  borderRadius: "12px",
+                  padding: "8px",
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                <IconRobot size={24} color="white" />
+              </Box>
+
+              <Box>
+                <Title
+                  order={2}
+                  c="white"
+                  style={{
+                    fontWeight: 700,
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  Tracko
+                </Title>
+                <Text
+                  size="sm"
+                  c="rgba(255, 255, 255, 0.8)"
+                  style={{ marginTop: "-2px" }}
+                >
+                  Agente de Logística IA
+                </Text>
+              </Box>
+            </Flex>
+          </Group>
+
+          <Badge
+            variant="light"
+            color="white"
             size="sm"
-          />
-          <Title order={3}>Agente de asistencia en reparto</Title>
+            leftSection={<IconBolt size={12} />}
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.15)",
+              color: "white",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+            }}
+          >
+            {isReplying ? "Procesando..." : "En línea"}
+          </Badge>
         </Group>
       </AppShell.Header>
 
@@ -129,7 +192,7 @@ export const ChatLayout: React.FC = () => {
       <AppShell.Main>
         <div
           style={{
-            height: "calc(100vh - 60px - 2rem)",
+            height: "calc(100vh - 70px - 2rem)",
             display: "flex",
             flexDirection: "column",
           }}
@@ -142,17 +205,51 @@ export const ChatLayout: React.FC = () => {
                   alignItems: "center",
                   justifyContent: "center",
                   height: "100%",
+                  flexDirection: "column",
+                  gap: "16px",
                 }}
               >
-                <p style={{ textAlign: "center", color: "#888" }}>
-                  Selecciona un chat o empieza una nueva conversación.
-                </p>
+                <Box
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    borderRadius: "50%",
+                    padding: "20px",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <IconRobot size={48} color="white" />
+                </Box>
+                <Title order={3} c="gray.6">
+                  ¡Hola! Soy Tracko
+                </Title>
+                <Text ta="center" c="gray.5" size="lg">
+                  Tu asistente de logística inteligente.
+                  <br />
+                  Pregúntame lo que necesites sobre envíos y entregas.
+                </Text>
               </div>
             )}
             {messages.map((msg) => (
               <MessageBubble key={msg.id} message={msg} />
             ))}
-            {isReplying && <p>Asistente está escribiendo...</p>}
+            {isReplying && (
+              <Group gap="sm" p="md">
+                <Box
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    borderRadius: "50%",
+                    padding: "8px",
+                  }}
+                >
+                  <IconRobot size={16} color="white" />
+                </Box>
+                <Text c="gray.6" fs="italic">
+                  Tracko está escribiendo...
+                </Text>
+              </Group>
+            )}
             <div ref={messagesEndRef} />
           </div>
           <MessageInputForm
