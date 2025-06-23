@@ -66,7 +66,7 @@ export const AuthPage: React.FC = () => {
         style={{ width: "400px" }}
       >
         <Title order={2} ta="center" mb="md">
-          {isLogin ? "Bienvenido de Nuevo" : "Crear Cuenta"}
+          {isLogin ? "Bienvenido" : "Crear Cuenta"}
         </Title>
         <Text c="dimmed" size="sm" ta="center" mb="xl">
           {isLogin
@@ -101,7 +101,7 @@ export const AuthPage: React.FC = () => {
           </Stack>
         </form>
 
-        <Text color="dimmed" ta="center" size="sm" mt="md">
+        {/* <Text color="dimmed" ta="center" size="sm" mt="md">
           {isLogin ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}
           <a
             href="#"
@@ -113,7 +113,7 @@ export const AuthPage: React.FC = () => {
           >
             {isLogin ? "Regístrate" : "Inicia sesión"}
           </a>
-        </Text>
+        </Text> */}
       </Paper>
     </div>
   );

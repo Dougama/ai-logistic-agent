@@ -221,7 +221,7 @@ export function createEmbeddingBatches(
  * @param onProgress Callback de progreso
  * @returns Array de embeddings
  */
-export async function generateEmbeddingsRecursively(
+export async function generateEmbeddingsRecursivelyNoOptimization(
   batches: EmbeddingBatch[],
   onProgress?: (current: number, total: number, batchIndex: number) => void
 ): Promise<{ embedding: number[]; chunk: ChunkWithOverlap }[]> {
@@ -263,6 +263,55 @@ export async function generateEmbeddingsRecursively(
     } catch (error: any) {
       console.error(`Error procesando batch ${i}:`, error);
       throw new Error(`Error en batch ${i}: ${error.message}`);
+    }
+  }
+
+  return allEmbeddings;
+}
+
+async function generateEmbeddingsRecursively(
+  batches: EmbeddingBatch[]
+): Promise<{ embedding: number[]; chunk: ChunkWithOverlap }[]> {
+  const allEmbeddings: { embedding: number[]; chunk: ChunkWithOverlap }[] = [];
+
+  const model = ai.models;
+
+  for (const batch of batches) {
+    console.log(`🔄 Procesando batch de ${batch.contents.length} chunks...`);
+
+    // La preparación de los requests es correct
+
+    try {
+      // --- CAMBIO DEFINITIVO Y CORRECTO ---
+      // El método se llama 'embedContents' (en plural)
+      const result = await model.embedContent({
+        model: EMBEDDING_MODEL,
+        contents: batch.contents.map((chunk) => chunk.text),
+      });
+
+      const embeddingsFromApi = result.embeddings;
+
+      if (
+        !embeddingsFromApi ||
+        embeddingsFromApi.length !== batch.contents.length
+      ) {
+        throw new Error(
+          `El batch embedding no devolvió la cantidad esperada de resultados.`
+        );
+      }
+
+      for (let i = 0; i < embeddingsFromApi.length; i++) {
+        allEmbeddings.push({
+          embedding: embeddingsFromApi[i].values!,
+          chunk: batch.contents[i],
+        });
+      }
+
+      // Mantenemos una pausa para respetar los límites de RPM (Requests Per Minute)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error(`Error procesando un batch de embeddings:`, error);
+      throw error;
     }
   }
 
@@ -365,12 +414,7 @@ export async function processPDFAndIndexVector(
     console.log(`📦 Batches creados: ${batches.length}`);
 
     // 4. Generar embeddings
-    const embeddings = await generateEmbeddingsRecursively(
-      batches,
-      (current, total, batchIndex) => {
-        console.log(`🔄 Progreso embeddings: ${current}/${total} batches`);
-      }
-    );
+    const embeddings = await generateEmbeddingsRecursively(batches);
 
     // 5. Indexar en Firestore Vector Search
     const docName = documentName || path.basename(filePath);
