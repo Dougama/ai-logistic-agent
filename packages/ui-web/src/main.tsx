@@ -1,10 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { AuthProvider } from "./context/AuthContext"; // <-- IMPORTAR
 import "./index.css";
-
+import "@mantine/core/styles.css";
+import { MantineProvider } from "@mantine/core";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <MantineProvider defaultColorScheme="light">
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </MantineProvider>
   </React.StrictMode>
 );

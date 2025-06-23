@@ -1,0 +1,45 @@
+# Node / pnpm
+node_modules
+**/node_modules
+dist
+**/dist
+.pnpm
+.pnpm-debug.log
+pnpm-lock.yaml
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.local
+.env.*
+
+# Docker
+Dockerfile
+Dockerfile.*
+.dockerignore
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+terraform.tfvars
+terraform.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

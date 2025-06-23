@@ -8,6 +8,7 @@
     "type-check": "pnpm -r type-check"
   },
   "devDependencies": {
+    "@types/node": "^24.0.3",
     "typescript": "^5.0.0"
   }
 }
