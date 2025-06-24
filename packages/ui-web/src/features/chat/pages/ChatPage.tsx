@@ -1,30 +1,33 @@
-import React, { useState, useCallback } from 'react';
-import { AppShell, Burger, Group, Title, Text, Box, Badge, Flex } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconRobot, IconBolt, IconLogout } from '@tabler/icons-react';
-import { useAuth } from '../../../shared/services/auth';
-import { ChatWindow } from '../components/ChatWindow';
-import { ChatSidebar } from '../components/ChatSidebar';
-import { useChatHistory } from '../hooks/useChatHistory';
-import { useChatList } from '../hooks/useChatList';
-import { useChat } from '../hooks/useChat';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../../shared/services/auth/firebase';
+import React, { useState, useCallback } from "react";
+import {
+  AppShell,
+  Burger,
+  Group,
+  Title,
+  Text,
+  Box,
+  Badge,
+  Flex,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconRobot, IconBolt } from "@tabler/icons-react";
+import { useAuth } from "../../../shared/services/auth";
+import { ChatWindow } from "../components/ChatWindow";
+import { ChatSidebar } from "../components/ChatSidebar";
+import { useChatList } from "../hooks/useChatList";
+import { chatService, messageService } from "../services";
+import type { ChatMessage } from "../types";
 
 export const ChatPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
 
-  // Hooks del chat
-  const { messages: historyMessages, setMessages: setHistoryMessages } = useChatHistory(activeChatId);
-  const { messages: chatMessages, setMessages: setChatMessages, isReplying, sendMessage } = useChat(activeChatId);
-  
-  // Usamos el historial si existe, sino los mensajes del chat actual
-  const messages = activeChatId ? historyMessages : chatMessages;
-  const setMessages = activeChatId ? setHistoryMessages : setChatMessages;
+  // Estados locales para mensajes
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isReplying, setIsReplying] = useState(false);
 
-  const userId = currentUser?.uid || 'user123';
+  const userId = currentUser?.uid || "user123";
   const {
     chats,
     isLoading,
@@ -35,43 +38,110 @@ export const ChatPage: React.FC = () => {
     addNewChat,
   } = useChatList(userId);
 
-  const handleSendMessage = useCallback(async (text: string) => {
+  // Cargar mensajes cuando se selecciona un chat
+  const loadChatMessages = useCallback(async (chatId: string) => {
     try {
-      const result = await sendMessage(text);
-      
-      if (!activeChatId && result?.chatId) {
-        setActiveChatId(result.chatId);
-        addNewChat(result);
+      const data = await chatService.getChatMessages(chatId);
+      const formattedMessages = messageService.formatMessages(data);
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error("Error loading chat messages:", error);
+      setMessages([]);
+    }
+  }, []);
+
+  // Enviar mensaje
+  const handleSendMessage = useCallback(
+    async (text: string) => {
+      console.log("🚀 Enviando mensaje:", text);
+
+      const userMessage: ChatMessage = {
+        id: `user_${Date.now()}`,
+        role: "user",
+        content: text,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+      setIsReplying(true);
+
+      try {
+        let response;
+
+        if (activeChatId) {
+          console.log("📤 Enviando a chat existente:", activeChatId);
+          response = await chatService.sendMessage(activeChatId, text);
+        } else {
+          console.log("🆕 Creando nuevo chat");
+          response = await chatService.createChat(text);
+        }
+
+        console.log("📥 Respuesta del servidor:", response);
+
+        const assistantMessage: ChatMessage = {
+          id: response.id,
+          role: "assistant",
+          content: response.content,
+          timestamp: new Date(response.timestamp),
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        // Si es un chat nuevo, actualizar el ID y agregar a la lista
+        if (!activeChatId && response.chatId) {
+          setActiveChatId(response.chatId);
+          addNewChat({
+            id: response.chatId,
+            title: messageService.generateChatTitle(text),
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error enviando mensaje:", error);
+
+        // Remover el mensaje del usuario si hay error
+        setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
+
+        // Mostrar error al usuario
+        alert(
+          "Error al enviar el mensaje. Por favor, verifica que el servidor esté funcionando."
+        );
+      } finally {
+        setIsReplying(false);
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  }, [sendMessage, activeChatId, addNewChat]);
+    },
+    [activeChatId, addNewChat]
+  );
 
-  const handleSelectChat = useCallback((chatId: string) => {
-    setActiveChatId(chatId);
-    toggleMobile();
-  }, [toggleMobile]);
+  // Seleccionar chat
+  const handleSelectChat = useCallback(
+    async (chatId: string) => {
+      console.log("📂 Seleccionando chat:", chatId);
+      setActiveChatId(chatId);
+      await loadChatMessages(chatId);
+      toggleMobile();
+    },
+    [loadChatMessages, toggleMobile]
+  );
 
+  // Nuevo chat
   const handleNewChat = useCallback(() => {
+    console.log("🆕 Iniciando nuevo chat");
     setActiveChatId(null);
+    setMessages([]);
     toggleMobile();
   }, [toggleMobile]);
 
-  const handleDeleteChat = useCallback(async (chatId: string) => {
-    await deleteChat(chatId);
-    if (activeChatId === chatId) {
-      setActiveChatId(null);
-    }
-  }, [deleteChat, activeChatId]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
+  // Eliminar chat
+  const handleDeleteChat = useCallback(
+    async (chatId: string) => {
+      await deleteChat(chatId);
+      if (activeChatId === chatId) {
+        setActiveChatId(null);
+        setMessages([]);
+      }
+    },
+    [deleteChat, activeChatId]
+  );
 
   return (
     <AppShell
@@ -79,14 +149,14 @@ export const ChatPage: React.FC = () => {
       header={{ height: 70 }}
       navbar={{
         width: 300,
-        breakpoint: 'sm',
+        breakpoint: "sm",
         collapsed: { mobile: !mobileOpened },
       }}
     >
       <AppShell.Header
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderBottom: 'none',
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          borderBottom: "none",
         }}
       >
         <Group h="100%" px="md" justify="space-between">
@@ -102,10 +172,10 @@ export const ChatPage: React.FC = () => {
             <Flex align="center" gap="sm">
               <Box
                 style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '12px',
-                  padding: '8px',
-                  backdropFilter: 'blur(10px)',
+                  background: "rgba(255, 255, 255, 0.2)",
+                  borderRadius: "12px",
+                  padding: "8px",
+                  backdropFilter: "blur(10px)",
                 }}
               >
                 <IconRobot size={24} color="white" />
@@ -117,7 +187,7 @@ export const ChatPage: React.FC = () => {
                   c="white"
                   style={{
                     fontWeight: 700,
-                    letterSpacing: '0.5px',
+                    letterSpacing: "0.5px",
                   }}
                 >
                   Tracko
@@ -125,7 +195,7 @@ export const ChatPage: React.FC = () => {
                 <Text
                   size="sm"
                   c="rgba(255, 255, 255, 0.8)"
-                  style={{ marginTop: '-2px' }}
+                  style={{ marginTop: "-2px" }}
                 >
                   Agente de Logística IA
                 </Text>
@@ -140,12 +210,12 @@ export const ChatPage: React.FC = () => {
               size="sm"
               leftSection={<IconBolt size={12} />}
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                color: 'white',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                backgroundColor: "rgba(255, 255, 255, 0.15)",
+                color: "white",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
               }}
             >
-              {isReplying ? 'Procesando...' : 'En línea'}
+              {isReplying ? "Procesando..." : "En línea"}
             </Badge>
           </Group>
         </Group>
@@ -166,7 +236,7 @@ export const ChatPage: React.FC = () => {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <div style={{ height: 'calc(100vh - 70px - 2rem)' }}>
+        <div style={{ height: "calc(100vh - 70px - 2rem)" }}>
           <ChatWindow
             messages={messages}
             onSendMessage={handleSendMessage}
@@ -177,4 +247,3 @@ export const ChatPage: React.FC = () => {
     </AppShell>
   );
 };
-
