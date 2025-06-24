@@ -3,7 +3,7 @@ import "./globals.css";
 // Estilos compartidos
 import "./shared/utilities.css";
 import "./shared/components.css";
-
+import "./features/documentation.css";
 // Estilos por features
 import "./features/auth.css";
 import "./features/chat.css";

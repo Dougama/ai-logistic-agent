@@ -14,6 +14,12 @@ const DashboardPage = lazy(() =>
   import("../features/dashboard").then((m) => ({ default: m.DashboardPage }))
 );
 
+const DocumentationPage = lazy(() =>
+  import("../features/documentation").then((m) => ({
+    default: m.DocumentationPage,
+  }))
+);
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -56,6 +62,15 @@ export const AppRoutes: React.FC = () => {
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/documentation"
+          element={
+            <ProtectedRoute>
+              <DocumentationPage />
+            </ProtectedRoute>
+          }
+        />
+        ;
       </Routes>
     </Suspense>
   );

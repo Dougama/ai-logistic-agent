@@ -57,7 +57,7 @@ export const DashboardPage: React.FC = () => {
   const sidebarItems = [
     { label: "Dashboard", active: true, onClick: () => navigate("/dashboard") },
     { label: "Chat con Tracko", onClick: () => navigate("/chat") },
-    { label: "Envíos", onClick: () => console.log("Envíos") },
+    { label: "Documentación", onClick: () => navigate("/documentation") }, // Cambiado de Envíos
     { label: "Rutas", onClick: () => console.log("Rutas") },
     { label: "Reportes", onClick: () => console.log("Reportes") },
     { label: "Configuración", onClick: () => console.log("Configuración") },

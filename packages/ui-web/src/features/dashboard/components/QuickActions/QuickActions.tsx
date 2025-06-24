@@ -22,11 +22,11 @@ export const QuickActions: React.FC = () => {
       onClick: () => navigate("/chat"),
     },
     {
-      title: "Nuevo Envío",
-      description: "Crear un nuevo envío",
-      icon: <IconTruck size={20} />,
+      title: "Documentación",
+      description: "Acceder a manuales y guías",
+      icon: <IconFileText size={20} />,
       color: "green",
-      onClick: () => console.log("Nuevo envío"),
+      onClick: () => navigate("/documentation"),
     },
     {
       title: "Rastrear Paquete",
