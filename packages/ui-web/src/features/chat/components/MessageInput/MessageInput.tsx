@@ -2,6 +2,25 @@ import React, { useState } from "react";
 import { TextInput, Button, Group, Box, Container } from "@mantine/core";
 import { IconSend, IconSparkles } from "@tabler/icons-react";
 
+// Nuevos colores y estilos
+const COLORS = {
+  neutral: {
+    200: "#e7e5e4",
+    400: "#a8a29e",
+    100: "#f5f5f4",
+    300: "#d6d3d1",
+  },
+  primary: {
+    400: "#38b2ac",
+    500: "#319795",
+  },
+};
+
+const GRADIENTS = {
+  light: "linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%)",
+  primary: "linear-gradient(135deg, #38b2ac 0%, #319795 100%)",
+};
+
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
@@ -25,8 +44,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     <Box
       py="lg"
       style={{
-        borderTop: "1px solid #e5e7eb",
-        background: "linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)",
+        borderTop: `1px solid ${COLORS.neutral[200]}`,
+        background: GRADIENTS.light,
         backdropFilter: "blur(10px)",
       }}
     >
@@ -43,23 +62,23 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               radius="xl"
               styles={{
                 input: {
-                  border: "2px solid #e5e7eb",
+                  border: `2px solid ${COLORS.neutral[200]}`,
                   backgroundColor: "white",
                   fontSize: "16px",
                   padding: "16px 20px",
                   transition: "all 0.2s ease",
                   "&:focus": {
-                    borderColor: "#667eea",
-                    boxShadow: "0 0 0 3px rgba(102, 126, 234, 0.1)",
+                    borderColor: COLORS.primary[400],
+                    boxShadow: "0 0 0 3px rgba(56, 178, 172, 0.1)",
                     backgroundColor: "white",
                   },
                   "&:disabled": {
-                    backgroundColor: "#f3f4f6",
-                    color: "#9ca3af",
-                    borderColor: "#d1d5db",
+                    backgroundColor: COLORS.neutral[100],
+                    color: COLORS.neutral[400],
+                    borderColor: COLORS.neutral[300],
                   },
                   "&::placeholder": {
-                    color: "#9ca3af",
+                    color: COLORS.neutral[400],
                   },
                 },
               }}
@@ -75,13 +94,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 minWidth: "60px",
                 height: "56px",
                 background: inputValue.trim()
-                  ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                  : "#e5e7eb",
+                  ? GRADIENTS.primary
+                  : COLORS.neutral[200],
                 border: "none",
                 transition: "all 0.2s ease",
                 boxShadow: inputValue.trim()
-                  ? "0 4px 14px rgba(102, 126, 234, 0.3)"
+                  ? "0 4px 14px rgba(56, 178, 172, 0.3)"
                   : "none",
+                "&:hover": inputValue.trim()
+                  ? {
+                      boxShadow: "0 6px 20px rgba(56, 178, 172, 0.4)",
+                      transform: "translateY(-1px)",
+                    }
+                  : {},
               }}
             >
               {isLoading ? (

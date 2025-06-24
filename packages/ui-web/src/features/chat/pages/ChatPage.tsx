@@ -18,6 +18,21 @@ import { useChatList } from "../hooks/useChatList";
 import { chatService, messageService } from "../services";
 import type { ChatMessage } from "../types";
 
+// Importar los nuevos colores
+const GRADIENTS = {
+  hero: "linear-gradient(135deg, #38b2ac 0%, #0ea5e9 50%, #319795 100%)",
+};
+
+const SHADOWS = {
+  primary: "0 4px 20px rgba(56, 178, 172, 0.15)",
+};
+
+const applyGlassmorphism = (opacity: number = 0.2) => ({
+  backgroundColor: `rgba(255, 255, 255, ${opacity})`,
+  backdropFilter: "blur(10px)",
+  border: "1px solid rgba(255, 255, 255, 0.3)",
+});
+
 export const ChatPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -155,8 +170,9 @@ export const ChatPage: React.FC = () => {
     >
       <AppShell.Header
         style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: GRADIENTS.hero,
           borderBottom: "none",
+          boxShadow: SHADOWS.primary,
         }}
       >
         <Group h="100%" px="md" justify="space-between">
@@ -172,10 +188,9 @@ export const ChatPage: React.FC = () => {
             <Flex align="center" gap="sm">
               <Box
                 style={{
-                  background: "rgba(255, 255, 255, 0.2)",
+                  ...applyGlassmorphism(0.2),
                   borderRadius: "12px",
                   padding: "8px",
-                  backdropFilter: "blur(10px)",
                 }}
               >
                 <IconRobot size={24} color="white" />
@@ -188,14 +203,18 @@ export const ChatPage: React.FC = () => {
                   style={{
                     fontWeight: 700,
                     letterSpacing: "0.5px",
+                    textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
                   }}
                 >
                   Tracko
                 </Title>
                 <Text
                   size="sm"
-                  c="rgba(255, 255, 255, 0.8)"
-                  style={{ marginTop: "-2px" }}
+                  c="rgba(255, 255, 255, 0.9)"
+                  style={{
+                    marginTop: "-2px",
+                    textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+                  }}
                 >
                   Agente de Logística IA
                 </Text>
@@ -210,9 +229,8 @@ export const ChatPage: React.FC = () => {
               size="sm"
               leftSection={<IconBolt size={12} />}
               style={{
-                backgroundColor: "rgba(255, 255, 255, 0.15)",
+                ...applyGlassmorphism(0.2),
                 color: "white",
-                border: "1px solid rgba(255, 255, 255, 0.3)",
               }}
             >
               {isReplying ? "Procesando..." : "En línea"}

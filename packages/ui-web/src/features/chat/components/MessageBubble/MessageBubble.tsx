@@ -1,5 +1,5 @@
 // ========================================
-// src/features/chat/components/MessageBubble/MessageBubble.tsx (CORREGIDO)
+// src/features/chat/components/MessageBubble/MessageBubble.tsx (CON NUEVA PALETA)
 // ========================================
 import React from "react";
 import ReactMarkdown from "react-markdown";
@@ -22,51 +22,89 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   };
 
   return (
-    <Box mb="xl">
+    <Box
+      mb="xl"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: isUser ? "flex-end" : "flex-start",
+        maxWidth: "100%",
+      }}
+    >
       {/* Header con info del emisor */}
-      <Group gap="xs" mb="sm">
-        <Box
-          style={{
-            width: "24px",
-            height: "24px",
-            borderRadius: "6px",
-            background: isUser
-              ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-              : "linear-gradient(135deg, #4caf50 0%, #81c784 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {isUser ? (
-            <IconUser size={14} color="white" />
-          ) : (
-            <IconRobot size={14} color="white" />
-          )}
-        </Box>
+      <Group
+        gap="xs"
+        mb="sm"
+        style={{
+          alignSelf: isUser ? "flex-end" : "flex-start",
+        }}
+      >
+        {isUser && (
+          <>
+            <Text size="xs" c="dimmed">
+              {formatTime(message.timestamp)}
+            </Text>
+            <Text size="sm" fw={600} c="#0ea5e9">
+              Tú
+            </Text>
+            <Box
+              style={{
+                width: "24px",
+                height: "24px",
+                borderRadius: "6px",
+                background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <IconUser size={14} color="white" />
+            </Box>
+          </>
+        )}
 
-        <Text size="sm" fw={600} c={isUser ? "#667eea" : "#4caf50"}>
-          {isUser ? "Tú" : "Tracko"}
-        </Text>
-
-        <Text size="xs" c="dimmed">
-          {formatTime(message.timestamp)}
-        </Text>
+        {!isUser && (
+          <>
+            <Box
+              style={{
+                width: "24px",
+                height: "24px",
+                borderRadius: "6px",
+                background: "linear-gradient(135deg, #38b2ac 0%, #319795 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <IconRobot size={14} color="white" />
+            </Box>
+            <Text size="sm" fw={600} c="#38b2ac">
+              Tracko
+            </Text>
+            <Text size="xs" c="dimmed">
+              {formatTime(message.timestamp)}
+            </Text>
+          </>
+        )}
       </Group>
 
       {/* Contenido del mensaje */}
       <Box
-        pl="md"
         style={{
-          borderLeft: `3px solid ${isUser ? "#667eea" : "#4caf50"}`,
-          paddingLeft: "16px",
+          maxWidth: "80%",
+          minWidth: "200px",
+          borderLeft: !isUser ? `3px solid #38b2ac` : "none",
+          borderRight: isUser ? `3px solid #0ea5e9` : "none",
+          paddingLeft: !isUser ? "16px" : "0",
+          paddingRight: isUser ? "16px" : "0",
+          alignSelf: isUser ? "flex-end" : "flex-start",
         }}
       >
         <Box
           style={{
             fontSize: "15px",
             lineHeight: 1.6,
-            color: isUser ? "#2d3748" : "#1a202c",
+            color: isUser ? "#1c1917" : "#292524",
             fontWeight: isUser ? 500 : 400,
           }}
         >
@@ -80,7 +118,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     mb="sm"
                     style={{
                       margin: "0 0 12px 0",
-                      color: isUser ? "#4a5568" : "#2d3748",
+                      color: isUser ? "#44403c" : "#1c1917",
                       fontWeight: isUser ? 500 : 400,
                     }}
                   />
@@ -92,7 +130,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   {...props}
                   style={{
                     fontWeight: 700,
-                    color: isUser ? "#667eea" : "#4caf50",
+                    color: isUser ? "#0ea5e9" : "#38b2ac",
                   }}
                 />
               ),
@@ -102,7 +140,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   {...props}
                   style={{
                     fontStyle: "italic",
-                    color: isUser ? "#805ad5" : "#38a169",
+                    color: isUser ? "#f97316" : "#ea580c",
                   }}
                 />
               ),
@@ -110,21 +148,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               h1: ({ node, ...props }) => {
                 const { ref, ...restProps } = props;
                 return (
-                  <Text {...restProps} size="xl" fw={700} mb="md" c="#2d3748" />
+                  <Text {...restProps} size="xl" fw={700} mb="md" c="#1c1917" />
                 );
               },
 
               h2: ({ node, ...props }) => {
                 const { ref, ...restProps } = props;
                 return (
-                  <Text {...restProps} size="lg" fw={600} mb="sm" c="#4a5568" />
+                  <Text {...restProps} size="lg" fw={600} mb="sm" c="#292524" />
                 );
               },
 
               h3: ({ node, ...props }) => {
                 const { ref, ...restProps } = props;
                 return (
-                  <Text {...restProps} size="md" fw={600} mb="sm" c="#4a5568" />
+                  <Text {...restProps} size="md" fw={600} mb="sm" c="#44403c" />
                 );
               },
 
@@ -169,7 +207,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                         width: "6px",
                         height: "6px",
                         borderRadius: "50%",
-                        background: isUser ? "#667eea" : "#4caf50",
+                        background: isUser ? "#0ea5e9" : "#38b2ac",
                       }}
                     />
                     {restProps.children}
@@ -181,16 +219,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 <blockquote
                   {...props}
                   style={{
-                    borderLeft: `4px solid ${isUser ? "#e2e8f0" : "#f0f4f8"}`,
-                    backgroundColor: isUser ? "#f8fafc" : "#f7fafc",
-                    borderRadius: "4px",
+                    borderLeft: `4px solid ${isUser ? "#bae6fd" : "#b2f5ea"}`,
+                    backgroundColor: isUser ? "#f0f9ff" : "#f0fdfa",
+                    borderRadius: "8px",
                     fontStyle: "italic",
-                    color: "#4a5568",
-                    paddingLeft: "1rem", // equivalente a pl="md"
-                    paddingTop: "0.5rem", // equivalente a py="sm"
-                    paddingBottom: "0.5rem",
-                    marginBottom: "0.5rem", // equivalente a mb="sm"
-                    margin: "0 0 0.5rem 0",
+                    color: "#57534e",
+                    paddingLeft: "1rem",
+                    paddingTop: "0.75rem",
+                    paddingBottom: "0.75rem",
+                    marginBottom: "0.75rem",
+                    margin: "0 0 0.75rem 0",
                   }}
                 />
               ),
@@ -199,31 +237,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 <code
                   {...props}
                   style={{
-                    backgroundColor: isUser ? "#edf2f7" : "#e6fffa",
-                    color: isUser ? "#2d3748" : "#234e52",
+                    backgroundColor: isUser ? "#eff6ff" : "#ecfdf5",
+                    color: isUser ? "#1e40af" : "#166534",
                     borderRadius: "4px",
                     fontSize: "14px",
                     fontFamily: '"Fira Code", "Monaco", "Consolas", monospace',
                     fontWeight: 500,
-                    padding: "2px 6px",
+                    padding: "3px 6px",
+                    border: `1px solid ${isUser ? "#dbeafe" : "#dcfce7"}`,
                   }}
                 />
               ),
 
-              // FIX: Usar elemento pre nativo para evitar conflictos de tipos
               pre: ({ node, ...props }) => (
                 <pre
                   {...props}
                   style={{
-                    backgroundColor: "#1a202c",
-                    color: "#e2e8f0",
-                    borderRadius: "8px",
+                    backgroundColor: "#1c1917",
+                    color: "#fafaf9",
+                    borderRadius: "12px",
                     overflow: "auto",
                     fontSize: "14px",
                     fontFamily: '"Fira Code", "Monaco", "Consolas", monospace',
-                    border: "1px solid #2d3748",
-                    padding: "1rem", // equivalente a p="md"
-                    marginBottom: "0.5rem", // equivalente a mb="sm"
+                    border: "1px solid #44403c",
+                    padding: "1.25rem",
+                    marginBottom: "1rem",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                   }}
                 />
               ),
@@ -234,7 +273,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    color: isUser ? "#667eea" : "#4caf50",
+                    color: isUser ? "#0ea5e9" : "#38b2ac",
                     textDecoration: "underline",
                     fontWeight: 500,
                     transition: "color 0.2s ease",

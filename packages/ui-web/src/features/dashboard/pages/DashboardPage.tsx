@@ -26,6 +26,21 @@ import { useAuth } from "../../../shared/services/auth";
 import { DashboardStats } from "../components/DashboardStats";
 import { QuickActions } from "../components/QuickActions";
 
+// Importar los nuevos colores
+const GRADIENTS = {
+  hero: "linear-gradient(135deg, #38b2ac 0%, #0ea5e9 50%, #319795 100%)",
+};
+
+const SHADOWS = {
+  primary: "0 4px 20px rgba(56, 178, 172, 0.15)",
+};
+
+const applyGlassmorphism = (opacity: number = 0.2) => ({
+  backgroundColor: `rgba(255, 255, 255, ${opacity})`,
+  backdropFilter: "blur(10px)",
+  border: "1px solid rgba(255, 255, 255, 0.3)",
+});
+
 export const DashboardPage: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -60,8 +75,9 @@ export const DashboardPage: React.FC = () => {
     >
       <AppShell.Header
         style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: GRADIENTS.hero,
           borderBottom: "none",
+          boxShadow: SHADOWS.primary,
         }}
       >
         <Group h="100%" px="md" justify="space-between">
@@ -77,10 +93,9 @@ export const DashboardPage: React.FC = () => {
             <Flex align="center" gap="sm">
               <Box
                 style={{
-                  background: "rgba(255, 255, 255, 0.2)",
+                  ...applyGlassmorphism(0.2),
                   borderRadius: "12px",
                   padding: "8px",
-                  backdropFilter: "blur(10px)",
                 }}
               >
                 <IconRobot size={24} color="white" />
@@ -93,14 +108,18 @@ export const DashboardPage: React.FC = () => {
                   style={{
                     fontWeight: 700,
                     letterSpacing: "0.5px",
+                    textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
                   }}
                 >
                   Tracko Logistics
                 </Title>
                 <Text
                   size="sm"
-                  c="rgba(255, 255, 255, 0.8)"
-                  style={{ marginTop: "-2px" }}
+                  c="rgba(255, 255, 255, 0.9)"
+                  style={{
+                    marginTop: "-2px",
+                    textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+                  }}
                 >
                   Dashboard Principal
                 </Text>
@@ -110,18 +129,46 @@ export const DashboardPage: React.FC = () => {
 
           <Group>
             <Tooltip label="Notificaciones">
-              <ActionIcon variant="subtle" color="white" size="lg">
+              <ActionIcon
+                variant="subtle"
+                color="white"
+                size="lg"
+                style={{
+                  ...applyGlassmorphism(0.1),
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    ...applyGlassmorphism(0.2),
+                  },
+                }}
+              >
                 <IconBell size={20} />
               </ActionIcon>
             </Tooltip>
 
             <Tooltip label="Configuración">
-              <ActionIcon variant="subtle" color="white" size="lg">
+              <ActionIcon
+                variant="subtle"
+                color="white"
+                size="lg"
+                style={{
+                  ...applyGlassmorphism(0.1),
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    ...applyGlassmorphism(0.2),
+                  },
+                }}
+              >
                 <IconSettings size={20} />
               </ActionIcon>
             </Tooltip>
 
-            <Text c="white" size="sm">
+            <Text
+              c="white"
+              size="sm"
+              style={{
+                textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+              }}
+            >
               {currentUser?.email}
             </Text>
           </Group>
@@ -130,7 +177,7 @@ export const DashboardPage: React.FC = () => {
 
       <AppShell.Navbar p="md">
         <Stack gap="xs">
-          <Title order={4} mb="md">
+          <Title order={4} mb="md" c="#1c1917">
             Navegación
           </Title>
           {sidebarItems.map((item, index) => (
@@ -140,6 +187,13 @@ export const DashboardPage: React.FC = () => {
               justify="flex-start"
               onClick={item.onClick}
               fullWidth
+              style={{
+                backgroundColor: item.active ? "#38b2ac" : "transparent",
+                color: item.active ? "white" : "#44403c",
+                "&:hover": {
+                  backgroundColor: item.active ? "#319795" : "#f5f5f4",
+                },
+              }}
             >
               {item.label}
             </Button>
@@ -152,6 +206,11 @@ export const DashboardPage: React.FC = () => {
               variant="light"
               color="red"
               fullWidth
+              style={{
+                "&:hover": {
+                  backgroundColor: "#fef2f2",
+                },
+              }}
             >
               Cerrar Sesión
             </Button>
@@ -162,10 +221,10 @@ export const DashboardPage: React.FC = () => {
       <AppShell.Main>
         <Stack gap="lg">
           <div>
-            <Title order={1} mb="xs">
+            <Title order={1} mb="xs" c="#1c1917">
               ¡Bienvenido al Dashboard!
             </Title>
-            <Text c="dimmed" size="lg">
+            <Text c="#78716c" size="lg">
               Gestiona tu operación logística desde aquí
             </Text>
           </div>
