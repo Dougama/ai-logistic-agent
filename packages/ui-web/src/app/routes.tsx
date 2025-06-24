@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../shared/services/auth/AuthContext";
-import { LoadingScreen } from "../shared/components/ui/LoadingScreen";
+import { LoadingScreen } from "../shared/components/ui";
 
 // Lazy loading de features
 const AuthPage = lazy(() =>

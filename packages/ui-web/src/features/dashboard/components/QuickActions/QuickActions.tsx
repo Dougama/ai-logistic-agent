@@ -1,5 +1,5 @@
 import React from "react";
-import { Paper, Title, SimpleGrid, Button, Stack } from "@mantine/core";
+import { Paper, Title, SimpleGrid, Button, Stack, Text } from "@mantine/core";
 import {
   IconMessageCircle,
   IconTruck,

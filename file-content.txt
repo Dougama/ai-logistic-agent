@@ -1,1057 +1,121 @@
-/ ========================================
-// packages/ui-web/src/features/chat/index.ts
 // ========================================
-// Punto de entrada del módulo de chat - EXTRAÍBLE
-export { ChatPage } from './pages';
-export { ChatWindow, MessageBubble, MessageInput, ChatSidebar } from './components';
-export { useChat, useChatHistory, useChatList } from './hooks';
-export { chatService, messageService } from './services';
-export { ChatProvider, useChatContext } from './context';
-export type { Chat, ChatMessage, ChatSummary } from './types';
+// src/shared/components/ui/index.ts (NUEVO)
+// ========================================
+export { LoadingScreen } from './LoadingScreen';
 
 // ========================================
-// packages/ui-web/src/features/chat/types/chat.ts
+// src/shared/components/index.ts (NUEVO)
 // ========================================
-export interface Chat {
-  id: string;
-  title: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  lastMessage?: string;
-}
-
-export interface ChatSummary {
-  id: string;
-  title: string;
-  lastUpdatedAt: {
-    _seconds: number;
-    _nanoseconds: number;
-  };
-}
+export { LoadingScreen } from './ui';
 
 // ========================================
-// packages/ui-web/src/features/chat/types/message.ts
+// src/shared/services/index.ts (NUEVO)
 // ========================================
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  chatId?: string;
-}
-
-export interface MessageResponse {
-  id: string;
-  content: string;
-  timestamp: string;
-  chatId: string;
-}
+export * from './api';
+export * from './auth';
 
 // ========================================
-// packages/ui-web/src/features/chat/types/index.ts
+// src/shared/index.ts (NUEVO)
 // ========================================
-export type { Chat, ChatSummary } from './chat';
-export type { ChatMessage, MessageResponse } from './message';
-
-// ========================================
-// packages/ui-web/src/features/chat/services/chatService.ts
-// ========================================
-import { apiClient } from '../../../shared/services/api';
-import type { Chat, ChatSummary } from '../types';
-
-export class ChatService {
-  async getUserChats(userId: string, lastSeen?: number): Promise<ChatSummary[]> {
-    const endpoint = lastSeen 
-      ? `/chat/user/${userId}?lastSeen=${lastSeen}`
-      : `/chat/user/${userId}`;
-    
-    return apiClient.get<ChatSummary[]>(endpoint);
-  }
-
-  async createChat(prompt: string): Promise<any> {
-    return apiClient.post('/chat', { prompt });
-  }
-
-  async sendMessage(chatId: string, prompt: string): Promise<any> {
-    return apiClient.post(`/chat/${chatId}`, { prompt });
-  }
-
-  async deleteChat(chatId: string): Promise<void> {
-    return apiClient.delete(`/chat/${chatId}`);
-  }
-
-  async getChatMessages(chatId: string): Promise<any[]> {
-    return apiClient.get(`/chat/${chatId}/messages`);
-  }
-}
-
-export const chatService = new ChatService();
+export * from './components';
+export * from './services';
+export * from './hooks';
+export * from './types';
 
 // ========================================
-// packages/ui-web/src/features/chat/services/messageService.ts
+// CORRECCIÓN: src/features/dashboard/components/QuickActions/QuickActions.tsx
 // ========================================
-import type { ChatMessage } from '../types';
+import React from "react";
+import { Paper, Title, SimpleGrid, Button, Stack, Text } from "@mantine/core";
+import {
+  IconMessageCircle,
+  IconTruck,
+  IconPackage,
+  IconMapPin,
+  IconFileText,
+  IconUsers,
+} from "@tabler/icons-react";
+import { useNavigate } from "react-router-dom";
 
-export class MessageService {
-  formatTimestamp(timestamp: any): Date {
-    if (timestamp?._seconds) {
-      return new Date(timestamp._seconds * 1000);
-    }
-    return new Date(timestamp);
-  }
+export const QuickActions: React.FC = () => {
+  const navigate = useNavigate();
 
-  formatMessages(messages: any[]): ChatMessage[] {
-    return messages.map(msg => ({
-      ...msg,
-      timestamp: this.formatTimestamp(msg.timestamp),
-    }));
-  }
-
-  generateChatTitle(firstMessage: string, maxLength: number = 50): string {
-    return firstMessage.length > maxLength 
-      ? firstMessage.substring(0, maxLength) + '...'
-      : firstMessage;
-  }
-}
-
-export const messageService = new MessageService();
-
-// ========================================
-// packages/ui-web/src/features/chat/services/index.ts
-// ========================================
-export { chatService, ChatService } from './chatService';
-export { messageService, MessageService } from './messageService';
-
-// ========================================
-// packages/ui-web/src/features/chat/hooks/useChat.ts
-// ========================================
-import { useState, useCallback } from 'react';
-import { chatService, messageService } from '../services';
-import type { ChatMessage } from '../types';
-
-export const useChat = (chatId: string | null) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isReplying, setIsReplying] = useState(false);
-
-  const sendMessage = useCallback(async (text: string) => {
-    const userMessage: ChatMessage = {
-      id: `user_${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setIsReplying(true);
-
-    try {
-      const response = chatId 
-        ? await chatService.sendMessage(chatId, text)
-        : await chatService.createChat(text);
-
-      const assistantMessage: ChatMessage = {
-        id: response.id,
-        role: 'assistant',
-        content: response.content,
-        timestamp: new Date(response.timestamp),
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      return {
-        chatId: response.chatId,
-        title: messageService.generateChatTitle(text),
-      };
-    } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
-    } finally {
-      setIsReplying(false);
-    }
-  }, [chatId]);
-
-  const clearMessages = useCallback(() => {
-    setMessages([]);
-  }, []);
-
-  return {
-    messages,
-    setMessages,
-    isReplying,
-    sendMessage,
-    clearMessages,
-  };
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/hooks/useChatHistory.ts
-// ========================================
-import { useState, useEffect } from 'react';
-import { chatService, messageService } from '../services';
-import type { ChatMessage } from '../types';
-
-export const useChatHistory = (chatId: string | null) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!chatId) {
-      setMessages([]);
-      return;
-    }
-
-    const loadChatHistory = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await chatService.getChatMessages(chatId);
-        const formattedMessages = messageService.formatMessages(data);
-        setMessages(formattedMessages);
-      } catch (err) {
-        console.error('Error loading chat history:', err);
-        setError('Error al cargar el historial del chat');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadChatHistory();
-  }, [chatId]);
-
-  return { messages, setMessages, isLoading, error };
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/hooks/useChatList.ts
-// ========================================
-import { useState, useEffect, useCallback } from 'react';
-import { chatService } from '../services';
-import type { ChatSummary } from '../types';
-
-const PAGE_SIZE = 6;
-
-export const useChatList = (userId: string) => {
-  const [chats, setChats] = useState<ChatSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-
-  const loadInitialChats = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await chatService.getUserChats(userId);
-      setChats(data);
-      setHasMore(data.length >= PAGE_SIZE);
-    } catch (error) {
-      console.error('Error loading chats:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
-
-  const loadMoreChats = useCallback(async () => {
-    if (isLoadingMore || !hasMore || chats.length === 0) return;
-
-    setIsLoadingMore(true);
-    try {
-      const lastChat = chats[chats.length - 1];
-      const lastTimestamp = lastChat.lastUpdatedAt._seconds * 1000 + 
-                           lastChat.lastUpdatedAt._nanoseconds / 1000000;
-      
-      const newChats = await chatService.getUserChats(userId, lastTimestamp);
-      setChats(prev => [...prev, ...newChats]);
-      setHasMore(newChats.length >= PAGE_SIZE);
-    } catch (error) {
-      console.error('Error loading more chats:', error);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [userId, chats, isLoadingMore, hasMore]);
-
-  const deleteChat = useCallback(async (chatId: string) => {
-    try {
-      await chatService.deleteChat(chatId);
-      setChats(prev => prev.filter(chat => chat.id !== chatId));
-    } catch (error) {
-      console.error('Error deleting chat:', error);
-      throw error;
-    }
-  }, []);
-
-  const addNewChat = useCallback((newChatData: { id: string; title: string }) => {
-    const newChat: ChatSummary = {
-      id: newChatData.id,
-      title: newChatData.title,
-      lastUpdatedAt: {
-        _seconds: Math.floor(Date.now() / 1000),
-        _nanoseconds: 0,
-      },
-    };
-    setChats(prev => [newChat, ...prev]);
-  }, []);
-
-  useEffect(() => {
-    loadInitialChats();
-  }, [loadInitialChats]);
-
-  return {
-    chats,
-    isLoading,
-    isLoadingMore,
-    hasMore,
-    loadMoreChats,
-    deleteChat,
-    addNewChat,
-    refreshChats: loadInitialChats,
-  };
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/hooks/index.ts
-// ========================================
-export { useChat } from './useChat';
-export { useChatHistory } from './useChatHistory';
-export { useChatList } from './useChatList';
-
-// ========================================
-// packages/ui-web/src/features/chat/context/ChatContext.tsx
-// ========================================
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { ChatMessage } from '../types';
-
-interface ChatContextType {
-  activeChatId: string | null;
-  setActiveChatId: (id: string | null) => void;
-  messages: ChatMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-  isReplying: boolean;
-  setIsReplying: (replying: boolean) => void;
-}
-
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
-
-export const useChatContext = () => {
-  const context = useContext(ChatContext);
-  if (!context) {
-    throw new Error('useChatContext must be used within a ChatProvider');
-  }
-  return context;
-};
-
-interface ChatProviderProps {
-  children: ReactNode;
-}
-
-export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isReplying, setIsReplying] = useState(false);
-
-  const value = {
-    activeChatId,
-    setActiveChatId,
-    messages,
-    setMessages,
-    isReplying,
-    setIsReplying,
-  };
+  const actions = [
+    {
+      title: "Chat con Tracko",
+      description: "Consulta con el asistente IA",
+      icon: <IconMessageCircle size={20} />,
+      color: "blue",
+      onClick: () => navigate("/chat"),
+    },
+    {
+      title: "Nuevo Envío",
+      description: "Crear un nuevo envío",
+      icon: <IconTruck size={20} />,
+      color: "green",
+      onClick: () => console.log("Nuevo envío"),
+    },
+    {
+      title: "Rastrear Paquete",
+      description: "Seguimiento de entregas",
+      icon: <IconPackage size={20} />,
+      color: "orange",
+      onClick: () => console.log("Rastrear"),
+    },
+    {
+      title: "Ver Rutas",
+      description: "Optimizar recorridos",
+      icon: <IconMapPin size={20} />,
+      color: "violet",
+      onClick: () => console.log("Rutas"),
+    },
+    {
+      title: "Reportes",
+      description: "Análisis y estadísticas",
+      icon: <IconFileText size={20} />,
+      color: "cyan",
+      onClick: () => console.log("Reportes"),
+    },
+    {
+      title: "Gestionar Equipos",
+      description: "Administrar personal",
+      icon: <IconUsers size={20} />,
+      color: "teal",
+      onClick: () => console.log("Equipos"),
+    },
+  ];
 
   return (
-    <ChatContext.Provider value={value}>
-      {children}
-    </ChatContext.Provider>
-  );
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/context/index.ts
-// ========================================
-export { ChatProvider, useChatContext } from './ChatContext';
-
-// ========================================
-// packages/ui-web/src/features/chat/components/ChatWindow/ChatWindow.tsx
-// ========================================
-import React, { useRef, useEffect } from 'react';
-import { Box, Group, Text } from '@mantine/core';
-import { IconRobot, IconBolt } from '@tabler/icons-react';
-import { MessageBubble } from '../MessageBubble';
-import { MessageInput } from '../MessageInput';
-import type { ChatMessage } from '../../types';
-
-interface ChatWindowProps {
-  messages: ChatMessage[];
-  onSendMessage: (text: string) => void;
-  isReplying: boolean;
-}
-
-export const ChatWindow: React.FC<ChatWindowProps> = ({
-  messages,
-  onSendMessage,
-  isReplying,
-}) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  return (
-    <div
-      style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <div style={{ flexGrow: 1, overflowY: 'auto', padding: '10px' }}>
-        {messages.length === 0 && !isReplying && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
-            <Box
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '50%',
-                padding: '20px',
-                marginBottom: '10px',
-              }}
-            >
-              <IconRobot size={48} color="white" />
-            </Box>
-            <Text size="xl" fw={600} c="gray.6">
-              ¡Hola! Soy Tracko
-            </Text>
-            <Text ta="center" c="gray.5" size="lg">
-              Tu asistente de logística inteligente.
-              <br />
-              Pregúntame lo que necesites sobre envíos y entregas.
-            </Text>
-          </div>
-        )}
-        
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
-        ))}
-        
-        {isReplying && (
-          <Group gap="sm" p="md">
-            <Box
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '50%',
-                padding: '8px',
-              }}
-            >
-              <IconRobot size={16} color="white" />
-            </Box>
-            <Text c="gray.6" fs="italic">
-              Tracko está escribiendo...
-            </Text>
-          </Group>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <MessageInput onSendMessage={onSendMessage} isLoading={isReplying} />
-    </div>
-  );
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/components/ChatWindow/index.ts
-// ========================================
-export { ChatWindow } from './ChatWindow';
-
-// ========================================
-// packages/ui-web/src/features/chat/components/MessageBubble/MessageBubble.tsx
-// ========================================
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Paper, Group, Avatar, Text, Box, Stack } from '@mantine/core';
-import { IconUser, IconRobot } from '@tabler/icons-react';
-import type { ChatMessage } from '../../types';
-
-interface MessageBubbleProps {
-  message: ChatMessage;
-}
-
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
-  const isUser = message.role === 'user';
-
-  const formatTime = (timestamp: Date) => {
-    return new Intl.DateTimeFormat('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(timestamp);
-  };
-
-  return (
-    <Group
-      align="flex-start"
-      justify={isUser ? 'flex-end' : 'flex-start'}
-      mb="lg"
-      wrap="nowrap"
-    >
-      {!isUser && (
-        <Avatar
-          size="md"
-          radius="xl"
-          color="logisticsPrimary"
-          style={{
-            background: 'linear-gradient(135deg, var(--mantine-color-logisticsPrimary-6), var(--mantine-color-logisticsSecondary-6))',
-          }}
-        >
-          <IconRobot size={20} />
-        </Avatar>
-      )}
-
-      <Stack gap={4} style={{ maxWidth: '75%', minWidth: '200px' }}>
-        <Paper
-          shadow="sm"
-          p="md"
-          radius="xl"
-          style={{
-            backgroundColor: isUser
-              ? 'var(--mantine-color-logisticsPrimary-6)'
-              : 'var(--mantine-color-gray-0)',
-            color: isUser ? 'white' : 'var(--mantine-color-gray-9)',
-            position: 'relative',
-            border: isUser ? 'none' : '1px solid var(--mantine-color-gray-3)',
-            ...(isUser
-              ? {
-                  background: 'linear-gradient(135deg, var(--mantine-color-logisticsPrimary-6), var(--mantine-color-logisticsPrimary-7))',
-                  boxShadow: '0 4px 12px rgba(33, 150, 243, 0.2)',
-                }
-              : {
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                }),
-          }}
-        >
-          <Box style={{ fontSize: '14px', lineHeight: 1.5 }}>
-            <ReactMarkdown
-              components={{
-                a: ({ node, ...props }) => (
-                  <a
-                    {...props}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      color: isUser
-                        ? 'rgba(255, 255, 255, 0.9)'
-                        : 'var(--mantine-color-logisticsPrimary-6)',
-                      textDecoration: 'underline',
-                      fontWeight: 500,
-                    }}
-                  />
-                ),
-                p: ({ node, ...props }) => (
-                  <p {...props} style={{ margin: '0 0 8px 0' }} />
-                ),
-                code: ({ node, ...props }) => (
-                  <code
-                    {...props}
-                    style={{
-                      backgroundColor: isUser
-                        ? 'rgba(255, 255, 255, 0.2)'
-                        : 'var(--mantine-color-gray-2)',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      fontFamily: 'Monaco, Consolas, monospace',
-                    }}
-                  />
-                ),
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
-          </Box>
-        </Paper>
-
-        <Text
-          size="xs"
-          c="dimmed"
-          style={{
-            alignSelf: isUser ? 'flex-end' : 'flex-start',
-            marginTop: '4px',
-            fontSize: '11px',
-          }}
-        >
-          {formatTime(message.timestamp)}
-        </Text>
-      </Stack>
-
-      {isUser && (
-        <Avatar
-          size="md"
-          radius="xl"
-          color="logisticsAccent"
-          style={{
-            background: 'linear-gradient(135deg, var(--mantine-color-logisticsAccent-5), var(--mantine-color-logisticsAccent-6))',
-          }}
-        >
-          <IconUser size={20} />
-        </Avatar>
-      )}
-    </Group>
-  );
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/components/MessageBubble/index.ts
-// ========================================
-export { MessageBubble } from './MessageBubble';
-
-// ========================================
-// packages/ui-web/src/features/chat/components/MessageInput/MessageInput.tsx
-// ========================================
-import React, { useState } from 'react';
-import { TextInput, Button, Group, Box } from '@mantine/core';
-import { IconSend, IconRocket } from '@tabler/icons-react';
-
-interface MessageInputProps {
-  onSendMessage: (message: string) => void;
-  isLoading: boolean;
-}
-
-export const MessageInput: React.FC<MessageInputProps> = ({
-  onSendMessage,
-  isLoading,
-}) => {
-  const [inputValue, setInputValue] = useState('');
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (inputValue.trim() && !isLoading) {
-      onSendMessage(inputValue.trim());
-      setInputValue('');
-    }
-  };
-
-  return (
-    <Box
-      p="md"
-      style={{
-        borderTop: '1px solid var(--mantine-color-gray-3)',
-        backgroundColor: 'var(--mantine-color-gray-0)',
-      }}
-    >
-      <form onSubmit={handleSubmit}>
-        <Group gap="sm">
-          <TextInput
-            value={inputValue}
-            onChange={(event) => setInputValue(event.currentTarget.value)}
-            placeholder="Pregúntale algo a Tracko..."
-            style={{ flex: 1 }}
-            disabled={isLoading}
-            variant="filled"
-            size="md"
-            radius="xl"
-            styles={{
-              input: {
-                border: '1px solid var(--mantine-color-gray-4)',
-                backgroundColor: 'white',
-                '&:focus': {
-                  borderColor: 'var(--mantine-color-blue-5)',
-                  backgroundColor: 'white',
-                },
-                '&:disabled': {
-                  backgroundColor: 'var(--mantine-color-gray-1)',
-                  color: 'var(--mantine-color-gray-6)',
-                },
-              },
-            }}
-          />
+    <Paper p="md" radius="md" withBorder>
+      <Title order={3} mb="md">
+        Acciones Rápidas
+      </Title>
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm">
+        {actions.map((action, index) => (
           <Button
-            type="submit"
-            loading={isLoading}
-            disabled={!inputValue.trim()}
-            size="md"
-            radius="xl"
-            variant="gradient"
-            gradient={{ from: 'blue', to: 'cyan', deg: 45 }}
-            style={{ minWidth: '50px' }}
+            key={index}
+            variant="light"
+            color={action.color}
+            size="lg"
+            leftSection={action.icon}
+            onClick={action.onClick}
+            style={{
+              height: "auto",
+              padding: "16px",
+              justifyContent: "flex-start",
+            }}
           >
-            {isLoading ? <IconRocket size={18} /> : <IconSend size={18} />}
+            <Stack gap={2} align="flex-start">
+              <Text fw={600} size="sm">
+                {action.title}
+              </Text>
+              <Text size="xs" c="dimmed">
+                {action.description}
+              </Text>
+            </Stack>
           </Button>
-        </Group>
-      </form>
-    </Box>
+        ))}
+      </SimpleGrid>
+    </Paper>
   );
 };
-
-// ========================================
-// packages/ui-web/src/features/chat/components/MessageInput/index.ts
-// ========================================
-export { MessageInput } from './MessageInput';
-
-// ========================================
-// packages/ui-web/src/features/chat/components/ChatSidebar/ChatSidebar.tsx
-// ========================================
-import React from 'react';
-import {
-  Stack,
-  Button,
-  Text,
-  Group,
-  ActionIcon,
-  ScrollArea,
-  Divider,
-  Box,
-  Tooltip,
-} from '@mantine/core';
-import {
-  IconPlus,
-  IconTrash,
-  IconMessage,
-} from '@tabler/icons-react';
-import type { ChatSummary } from '../../types';
-
-interface ChatSidebarProps {
-  chats: ChatSummary[];
-  activeChatId: string | null;
-  isLoading: boolean;
-  hasMore: boolean;
-  isLoadingMore: boolean;
-  onSelectChat: (chatId: string) => void;
-  onNewChat: () => void;
-  onDeleteChat: (chatId: string) => Promise<void>;
-  onLoadMore: () => void;
-}
-
-export const ChatSidebar: React.FC<ChatSidebarProps> = ({
-  chats,
-  activeChatId,
-  isLoading,
-  hasMore,
-  isLoadingMore,
-  onSelectChat,
-  onNewChat,
-  onDeleteChat,
-  onLoadMore,
-}) => {
-  const handleDeleteChat = async (chatId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    try {
-      await onDeleteChat(chatId);
-    } catch (error) {
-      console.error('Error deleting chat:', error);
-      alert('Hubo un error al intentar eliminar la conversación.');
-    }
-  };
-
-  return (
-    <Box h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <Button
-        leftSection={<IconPlus size={16} />}
-        onClick={onNewChat}
-        variant="light"
-        fullWidth
-        mb="md"
-      >
-        Nuevo Chat
-      </Button>
-
-      <Divider mb="md" />
-
-      {/* Chat List */}
-      <ScrollArea style={{ flex: 1 }} type="hover">
-        <Stack gap="xs">
-          {isLoading ? (
-            <Text ta="center" c="dimmed" size="sm">
-              Cargando chats...
-            </Text>
-          ) : chats.length === 0 ? (
-            <Text ta="center" c="dimmed" size="sm">
-              No hay conversaciones aún
-            </Text>
-          ) : (
-            chats.map((chat) => (
-              <Group
-                key={chat.id}
-                gap="xs"
-                p="sm"
-                style={{
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  backgroundColor:
-                    chat.id === activeChatId
-                      ? 'var(--mantine-color-blue-light)'
-                      : 'transparent',
-                  border:
-                    chat.id === activeChatId
-                      ? '1px solid var(--mantine-color-blue-6)'
-                      : '1px solid transparent',
-                  transition: 'all 0.2s ease',
-                }}
-                onClick={() => onSelectChat(chat.id)}
-              >
-                <IconMessage
-                  size={16}
-                  style={{
-                    flexShrink: 0,
-                    color:
-                      chat.id === activeChatId
-                        ? 'var(--mantine-color-blue-6)'
-                        : 'var(--mantine-color-gray-6)',
-                  }}
-                />
-
-                <Text
-                  size="sm"
-                  style={{
-                    flex: 1,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    minWidth: 0,
-                  }}
-                  c={chat.id === activeChatId ? 'blue.6' : 'gray.7'}
-                >
-                  {chat.title}
-                </Text>
-
-                <Tooltip label="Eliminar conversación" position="top">
-                  <ActionIcon
-                    size="sm"
-                    variant="subtle"
-                    color="red"
-                    onClick={(e) => handleDeleteChat(chat.id, e)}
-                    style={{ flexShrink: 0 }}
-                  >
-                    <IconTrash size={14} />
-                  </ActionIcon>
-                </Tooltip>
-              </Group>
-            ))
-          )}
-
-          {!isLoading && hasMore && (
-            <Button
-              variant="subtle"
-              size="sm"
-              onClick={onLoadMore}
-              loading={isLoadingMore}
-              fullWidth
-            >
-              {isLoadingMore ? 'Cargando...' : 'Ver más'}
-            </Button>
-          )}
-        </Stack>
-      </ScrollArea>
-    </Box>
-  );
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/components/ChatSidebar/index.ts
-// ========================================
-export { ChatSidebar } from './ChatSidebar';
-
-// ========================================
-// packages/ui-web/src/features/chat/components/index.ts
-// ========================================
-export { ChatWindow } from './ChatWindow';
-export { MessageBubble } from './MessageBubble';
-export { MessageInput } from './MessageInput';
-export { ChatSidebar } from './ChatSidebar';
-
-// ========================================
-// packages/ui-web/src/features/chat/pages/ChatPage.tsx
-// ========================================
-import React, { useState, useCallback } from 'react';
-import { AppShell, Burger, Group, Title, Text, Box, Badge, Flex } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconRobot, IconBolt, IconLogout } from '@tabler/icons-react';
-import { useAuth } from '../../../shared/services/auth';
-import { ChatWindow } from '../components/ChatWindow';
-import { ChatSidebar } from '../components/ChatSidebar';
-import { useChatHistory } from '../hooks/useChatHistory';
-import { useChatList } from '../hooks/useChatList';
-import { useChat } from '../hooks/useChat';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../../shared/services/auth/firebase';
-
-export const ChatPage: React.FC = () => {
-  const { currentUser } = useAuth();
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false);
-
-  // Hooks del chat
-  const { messages: historyMessages, setMessages: setHistoryMessages } = useChatHistory(activeChatId);
-  const { messages: chatMessages, setMessages: setChatMessages, isReplying, sendMessage } = useChat(activeChatId);
-  
-  // Usamos el historial si existe, sino los mensajes del chat actual
-  const messages = activeChatId ? historyMessages : chatMessages;
-  const setMessages = activeChatId ? setHistoryMessages : setChatMessages;
-
-  const userId = currentUser?.uid || 'user123';
-  const {
-    chats,
-    isLoading,
-    isLoadingMore,
-    hasMore,
-    loadMoreChats,
-    deleteChat,
-    addNewChat,
-  } = useChatList(userId);
-
-  const handleSendMessage = useCallback(async (text: string) => {
-    try {
-      const result = await sendMessage(text);
-      
-      if (!activeChatId && result?.chatId) {
-        setActiveChatId(result.chatId);
-        addNewChat(result);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  }, [sendMessage, activeChatId, addNewChat]);
-
-  const handleSelectChat = useCallback((chatId: string) => {
-    setActiveChatId(chatId);
-    toggleMobile();
-  }, [toggleMobile]);
-
-  const handleNewChat = useCallback(() => {
-    setActiveChatId(null);
-    toggleMobile();
-  }, [toggleMobile]);
-
-  const handleDeleteChat = useCallback(async (chatId: string) => {
-    await deleteChat(chatId);
-    if (activeChatId === chatId) {
-      setActiveChatId(null);
-    }
-  }, [deleteChat, activeChatId]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
-
-  return (
-    <AppShell
-      padding="md"
-      header={{ height: 70 }}
-      navbar={{
-        width: 300,
-        breakpoint: 'sm',
-        collapsed: { mobile: !mobileOpened },
-      }}
-    >
-      <AppShell.Header
-        style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderBottom: 'none',
-        }}
-      >
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <Burger
-              opened={mobileOpened}
-              onClick={toggleMobile}
-              hiddenFrom="sm"
-              size="sm"
-              color="white"
-            />
-
-            <Flex align="center" gap="sm">
-              <Box
-                style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: '12px',
-                  padding: '8px',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >
-                <IconRobot size={24} color="white" />
-              </Box>
-
-              <Box>
-                <Title
-                  order={2}
-                  c="white"
-                  style={{
-                    fontWeight: 700,
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  Tracko
-                </Title>
-                <Text
-                  size="sm"
-                  c="rgba(255, 255, 255, 0.8)"
-                  style={{ marginTop: '-2px' }}
-                >
-                  Agente de Logística IA
-                </Text>
-              </Box>
-            </Flex>
-          </Group>
-
-          <Group>
-            <Badge
-              variant="light"
-              color="white"
-              size="sm"
-              leftSection={<IconBolt size={12} />}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                color: 'white',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-              }}
-            >
-              {isReplying ? 'Procesando...' : 'En línea'}
-            </Badge>
-          </Group>
-        </Group>
-      </AppShell.Header>
-
-      <AppShell.Navbar p="md">
-        <ChatSidebar
-          chats={chats}
-          activeChatId={activeChatId}
-          isLoading={isLoading}
-          hasMore={hasMore}
-          isLoadingMore={isLoadingMore}
-          onSelectChat={handleSelectChat}
-          onNewChat={handleNewChat}
-          onDeleteChat={handleDeleteChat}
-          onLoadMore={loadMoreChats}
-        />
-      </AppShell.Navbar>
-
-      <AppShell.Main>
-        <div style={{ height: 'calc(100vh - 70px - 2rem)' }}>
-          <ChatWindow
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isReplying={isReplying}
-          />
-        </div>
-      </AppShell.Main>
-    </AppShell>
-  );
-};
-
-// ========================================
-// packages/ui-web/src/features/chat/pages/index.ts
-// ========================================
-export { ChatPage } from './ChatPage';
