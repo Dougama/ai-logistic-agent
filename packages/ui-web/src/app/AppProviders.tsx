@@ -1,9 +1,15 @@
+// packages/ui-web/src/app/AppProviders.tsx (ACTUALIZADO)
+
 import React from "react";
 import { MantineProvider } from "@mantine/core";
 import { AuthProvider } from "../shared/services/auth/AuthContext";
 import { logisticsTheme } from "../styles/theme";
+
+// Importar todos los estilos desde el punto de entrada
+import "../styles";
+
+// Importar estilos de Mantine
 import "@mantine/core/styles.css";
-import "../styles/globals.css";
 
 interface AppProvidersProps {
   children: React.ReactNode;

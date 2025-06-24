@@ -1,0 +1,121 @@
+/* packages/ui-web/src/styles/features/message-input.css */
+
+/* =============================================================================
+   MESSAGE INPUT
+   ============================================================================= */
+
+.message-input {
+  padding: var(--spacing-layout-lg) 0;
+  border-top: 1px solid var(--color-border-primary);
+  background: var(--gradient-light);
+  backdrop-filter: blur(10px);
+}
+
+.message-input__form {
+  display: flex;
+  gap: var(--spacing-component-md);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-component-md);
+}
+
+.message-input__field {
+  flex: 1;
+  padding: var(--spacing-component-md) var(--spacing-5);
+  border: 2px solid var(--color-border-primary);
+  border-radius: var(--radius-full);
+  font-size: var(--text-base);
+  background: white;
+  color: var(--color-text-primary);
+  transition: all var(--duration-normal) var(--easing-ease-in-out);
+  font-family: var(--font-primary);
+}
+
+.message-input__field::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.message-input__field:focus {
+  outline: none;
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.1);
+  background: white;
+}
+
+.message-input__field:disabled {
+  background: var(--color-bg-disabled);
+  color: var(--color-text-disabled);
+  border-color: var(--color-border-disabled);
+  cursor: not-allowed;
+}
+
+.message-input__button {
+  min-width: 60px;
+  height: 56px;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--easing-ease-in-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+}
+
+.message-input__button--enabled {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-primary);
+}
+
+.message-input__button--enabled:hover {
+  box-shadow: var(--shadow-primary-hover);
+  transform: translateY(-1px);
+}
+
+.message-input__button--disabled {
+  background: var(--color-border-primary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.message-input__button--loading {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.message-input__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.message-input__icon--loading {
+  animation: spin var(--duration-slow) linear infinite;
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .message-input__form {
+    padding: 0 var(--spacing-component-sm);
+    gap: var(--spacing-component-sm);
+  }
+
+  .message-input__field {
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--text-sm);
+  }
+
+  .message-input__button {
+    min-width: 48px;
+    height: 48px;
+  }
+
+  .message-input__icon {
+    width: 18px;
+    height: 18px;
+  }
+}
