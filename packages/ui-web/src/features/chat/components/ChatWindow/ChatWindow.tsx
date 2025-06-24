@@ -128,10 +128,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {isReplying && (
             <div className="typing-indicator">
               <div className="typing-indicator__header">
-                <div className="typing-indicator__avatar">
-                  <IconSparkles size={16} color="white" />
-                </div>
-
                 <div className="typing-indicator__info">
                   <p className="typing-indicator__name">Tracko</p>
                   <p className="typing-indicator__status">

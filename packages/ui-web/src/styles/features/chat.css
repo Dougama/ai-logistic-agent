@@ -262,11 +262,10 @@
 .typing-indicator__header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
-  padding-left: var(--spacing-2);
-  margin-bottom: var(--spacing-component-sm);
+  gap: var(--spacing-2);
+  padding-left: 0;
+  margin-bottom: var(--spacing-2);
 }
-
 .typing-indicator__avatar {
   width: 32px;
   height: 32px;
@@ -297,9 +296,8 @@
 }
 
 .typing-indicator__content {
-  padding-left: var(--spacing-5);
-  margin-left: var(--spacing-2);
-  border-left: 3px solid var(--color-primary-400);
+  border-left: 1px solid var(--color-primary-400);
+  padding-left: var(--spacing-2);
 }
 
 .typing-indicator__dots {

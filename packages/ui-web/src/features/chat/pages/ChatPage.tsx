@@ -221,21 +221,6 @@ export const ChatPage: React.FC = () => {
               </Box>
             </Flex>
           </Group>
-
-          <Group>
-            <Badge
-              variant="light"
-              color="white"
-              size="sm"
-              leftSection={<IconBolt size={12} />}
-              style={{
-                ...applyGlassmorphism(0.2),
-                color: "white",
-              }}
-            >
-              {isReplying ? "Procesando..." : "En línea"}
-            </Badge>
-          </Group>
         </Group>
       </AppShell.Header>
 
