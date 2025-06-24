@@ -1,121 +1,537 @@
 // ========================================
-// src/shared/components/ui/index.ts (NUEVO)
+// src/features/chat/components/MessageBubble/MessageBubble.tsx (REDISEÑADO)
 // ========================================
-export { LoadingScreen } from './LoadingScreen';
+import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import { Box, Text, Group, Stack } from '@mantine/core';
+import { IconUser, IconRobot } from '@tabler/icons-react';
+import type { ChatMessage } from '../../types';
 
-// ========================================
-// src/shared/components/index.ts (NUEVO)
-// ========================================
-export { LoadingScreen } from './ui';
+interface MessageBubbleProps {
+  message: ChatMessage;
+}
 
-// ========================================
-// src/shared/services/index.ts (NUEVO)
-// ========================================
-export * from './api';
-export * from './auth';
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+  const isUser = message.role === 'user';
 
-// ========================================
-// src/shared/index.ts (NUEVO)
-// ========================================
-export * from './components';
-export * from './services';
-export * from './hooks';
-export * from './types';
-
-// ========================================
-// CORRECCIÓN: src/features/dashboard/components/QuickActions/QuickActions.tsx
-// ========================================
-import React from "react";
-import { Paper, Title, SimpleGrid, Button, Stack, Text } from "@mantine/core";
-import {
-  IconMessageCircle,
-  IconTruck,
-  IconPackage,
-  IconMapPin,
-  IconFileText,
-  IconUsers,
-} from "@tabler/icons-react";
-import { useNavigate } from "react-router-dom";
-
-export const QuickActions: React.FC = () => {
-  const navigate = useNavigate();
-
-  const actions = [
-    {
-      title: "Chat con Tracko",
-      description: "Consulta con el asistente IA",
-      icon: <IconMessageCircle size={20} />,
-      color: "blue",
-      onClick: () => navigate("/chat"),
-    },
-    {
-      title: "Nuevo Envío",
-      description: "Crear un nuevo envío",
-      icon: <IconTruck size={20} />,
-      color: "green",
-      onClick: () => console.log("Nuevo envío"),
-    },
-    {
-      title: "Rastrear Paquete",
-      description: "Seguimiento de entregas",
-      icon: <IconPackage size={20} />,
-      color: "orange",
-      onClick: () => console.log("Rastrear"),
-    },
-    {
-      title: "Ver Rutas",
-      description: "Optimizar recorridos",
-      icon: <IconMapPin size={20} />,
-      color: "violet",
-      onClick: () => console.log("Rutas"),
-    },
-    {
-      title: "Reportes",
-      description: "Análisis y estadísticas",
-      icon: <IconFileText size={20} />,
-      color: "cyan",
-      onClick: () => console.log("Reportes"),
-    },
-    {
-      title: "Gestionar Equipos",
-      description: "Administrar personal",
-      icon: <IconUsers size={20} />,
-      color: "teal",
-      onClick: () => console.log("Equipos"),
-    },
-  ];
+  const formatTime = (timestamp: Date) => {
+    return new Intl.DateTimeFormat('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(timestamp);
+  };
 
   return (
-    <Paper p="md" radius="md" withBorder>
-      <Title order={3} mb="md">
-        Acciones Rápidas
-      </Title>
-      <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm">
-        {actions.map((action, index) => (
-          <Button
-            key={index}
-            variant="light"
-            color={action.color}
-            size="lg"
-            leftSection={action.icon}
-            onClick={action.onClick}
-            style={{
-              height: "auto",
-              padding: "16px",
-              justifyContent: "flex-start",
+    <Box mb="xl">
+      {/* Header con info del emisor */}
+      <Group gap="xs" mb="sm">
+        <Box
+          style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '6px',
+            background: isUser 
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              : 'linear-gradient(135deg, #4caf50 0%, #81c784 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {isUser ? (
+            <IconUser size={14} color="white" />
+          ) : (
+            <IconRobot size={14} color="white" />
+          )}
+        </Box>
+        
+        <Text 
+          size="sm" 
+          fw={600}
+          c={isUser ? '#667eea' : '#4caf50'}
+        >
+          {isUser ? 'Tú' : 'Tracko'}
+        </Text>
+        
+        <Text size="xs" c="dimmed">
+          {formatTime(message.timestamp)}
+        </Text>
+      </Group>
+
+      {/* Contenido del mensaje */}
+      <Box
+        pl="md"
+        style={{
+          borderLeft: `3px solid ${isUser ? '#667eea' : '#4caf50'}`,
+          paddingLeft: '16px',
+        }}
+      >
+        <Box
+          style={{
+            fontSize: '15px',
+            lineHeight: 1.6,
+            color: isUser ? '#2d3748' : '#1a202c',
+            fontWeight: isUser ? 500 : 400,
+          }}
+        >
+          <ReactMarkdown
+            components={{
+              p: ({ node, ...props }) => (
+                <Text 
+                  {...props} 
+                  mb="sm"
+                  style={{ 
+                    margin: '0 0 12px 0',
+                    color: isUser ? '#4a5568' : '#2d3748',
+                    fontWeight: isUser ? 500 : 400,
+                  }} 
+                />
+              ),
+              
+              strong: ({ node, ...props }) => (
+                <Text 
+                  component="strong" 
+                  {...props}
+                  fw={700}
+                  c={isUser ? '#667eea' : '#4caf50'}
+                />
+              ),
+              
+              em: ({ node, ...props }) => (
+                <Text 
+                  component="em" 
+                  {...props}
+                  fs="italic"
+                  c={isUser ? '#805ad5' : '#38a169'}
+                />
+              ),
+
+              h1: ({ node, ...props }) => (
+                <Text {...props} size="xl" fw={700} mb="md" c="#2d3748" />
+              ),
+
+              h2: ({ node, ...props }) => (
+                <Text {...props} size="lg" fw={600} mb="sm" c="#4a5568" />
+              ),
+
+              h3: ({ node, ...props }) => (
+                <Text {...props} size="md" fw={600} mb="sm" c="#4a5568" />
+              ),
+
+              ul: ({ node, ...props }) => (
+                <Box component="ul" {...props} ml="md" mb="sm" style={{
+                  listStyle: 'none',
+                  padding: 0,
+                }} />
+              ),
+
+              ol: ({ node, ...props }) => (
+                <Box component="ol" {...props} ml="md" mb="sm" />
+              ),
+
+              li: ({ node, ...props }) => (
+                <Box component="li" {...props} mb="xs" style={{
+                  position: 'relative',
+                  paddingLeft: '20px',
+                }}>
+                  <Box
+                    style={{
+                      position: 'absolute',
+                      left: '0',
+                      top: '8px',
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: isUser ? '#667eea' : '#4caf50',
+                    }}
+                  />
+                  {props.children}
+                </Box>
+              ),
+
+              blockquote: ({ node, ...props }) => (
+                <Box
+                  {...props}
+                  pl="md"
+                  py="sm"
+                  mb="sm"
+                  style={{
+                    borderLeft: `4px solid ${isUser ? '#e2e8f0' : '#f0f4f8'}`,
+                    backgroundColor: isUser ? '#f8fafc' : '#f7fafc',
+                    borderRadius: '4px',
+                    fontStyle: 'italic',
+                    color: '#4a5568',
+                  }}
+                />
+              ),
+
+              code: ({ node, ...props }) => (
+                <Text
+                  component="code"
+                  {...props}
+                  px="xs"
+                  py={2}
+                  style={{
+                    backgroundColor: isUser ? '#edf2f7' : '#e6fffa',
+                    color: isUser ? '#2d3748' : '#234e52',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    fontFamily: '"Fira Code", "Monaco", "Consolas", monospace',
+                    fontWeight: 500,
+                  }}
+                />
+              ),
+
+              pre: ({ node, ...props }) => (
+                <Box
+                  component="pre"
+                  {...props}
+                  p="md"
+                  mb="sm"
+                  style={{
+                    backgroundColor: '#1a202c',
+                    color: '#e2e8f0',
+                    borderRadius: '8px',
+                    overflow: 'auto',
+                    fontSize: '14px',
+                    fontFamily: '"Fira Code", "Monaco", "Consolas", monospace',
+                    border: '1px solid #2d3748',
+                  }}
+                />
+              ),
+
+              a: ({ node, ...props }) => (
+                <Text
+                  component="a"
+                  {...props}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: isUser ? '#667eea' : '#4caf50',
+                    textDecoration: 'underline',
+                    fontWeight: 500,
+                    transition: 'color 0.2s ease',
+                  }}
+                />
+              ),
             }}
           >
-            <Stack gap={2} align="flex-start">
-              <Text fw={600} size="sm">
-                {action.title}
-              </Text>
-              <Text size="xs" c="dimmed">
-                {action.description}
-              </Text>
-            </Stack>
-          </Button>
-        ))}
-      </SimpleGrid>
-    </Paper>
+            {message.content}
+          </ReactMarkdown>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+// ========================================
+// src/features/chat/components/ChatWindow/ChatWindow.tsx (ACTUALIZADO)
+// ========================================
+import React, { useRef, useEffect } from 'react';
+import { Box, Text, Stack, Container } from '@mantine/core';
+import { IconSparkles } from '@tabler/icons-react';
+import { MessageBubble } from '../MessageBubble';
+import { MessageInput } from '../MessageInput';
+import type { ChatMessage } from '../../types';
+
+interface ChatWindowProps {
+  messages: ChatMessage[];
+  onSendMessage: (text: string) => void;
+  isReplying: boolean;
+}
+
+export const ChatWindow: React.FC<ChatWindowProps> = ({
+  messages,
+  onSendMessage,
+  isReplying,
+}) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  return (
+    <Box
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 100%)',
+      }}
+    >
+      {/* Área de mensajes */}
+      <Box style={{ flexGrow: 1, overflowY: 'auto' }}>
+        <Container size="md" py="xl">
+          {messages.length === 0 && !isReplying && (
+            <Box
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '60vh',
+                flexDirection: 'column',
+                gap: '24px',
+              }}
+            >
+              <Box
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  borderRadius: '20px',
+                  padding: '24px',
+                  boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+                }}
+              >
+                <IconSparkles size={48} color="white" />
+              </Box>
+              
+              <Stack align="center" gap="md">
+                <Text 
+                  size="xl" 
+                  fw={700} 
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  ¡Hola! Soy Tracko
+                </Text>
+                
+                <Text 
+                  ta="center" 
+                  c="#6b7280" 
+                  size="lg"
+                  style={{ maxWidth: '400px', lineHeight: 1.6 }}
+                >
+                  Tu asistente de logística inteligente. Pregúntame sobre envíos, 
+                  rutas, inventario o cualquier cosa relacionada con tu operación.
+                </Text>
+                
+                <Box
+                  mt="md"
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {[
+                    '📦 ¿Cómo rastreo un envío?',
+                    '🚚 Optimizar rutas',
+                    '📊 Estado del inventario'
+                  ].map((suggestion, index) => (
+                    <Box
+                      key={index}
+                      p="xs"
+                      px="md"
+                      style={{
+                        background: 'rgba(102, 126, 234, 0.1)',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(102, 126, 234, 0.2)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onClick={() => onSendMessage(suggestion.replace(/^[📦🚚📊]\s/, ''))}
+                    >
+                      <Text size="sm" c="#667eea" fw={500}>
+                        {suggestion}
+                      </Text>
+                    </Box>
+                  ))}
+                </Box>
+              </Stack>
+            </Box>
+          )}
+          
+          {/* Mensajes */}
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} />
+          ))}
+          
+          {/* Indicador de escritura */}
+          {isReplying && (
+            <Box mb="xl">
+              <Box mb="sm" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Box
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '6px',
+                    background: 'linear-gradient(135deg, #4caf50 0%, #81c784 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <IconSparkles size={14} color="white" />
+                </Box>
+                
+                <Text size="sm" fw={600} c="#4caf50">
+                  Tracko
+                </Text>
+                
+                <Text size="xs" c="dimmed">
+                  escribiendo...
+                </Text>
+              </Box>
+              
+              <Box
+                pl="md"
+                style={{
+                  borderLeft: '3px solid #4caf50',
+                  paddingLeft: '16px',
+                }}
+              >
+                <Box style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  {[0, 1, 2].map((i) => (
+                    <Box
+                      key={i}
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: '#4caf50',
+                        animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </Container>
+      </Box>
+      
+      {/* Input de mensajes */}
+      <MessageInput onSendMessage={onSendMessage} isLoading={isReplying} />
+      
+      {/* CSS para la animación */}
+      <style>{`
+        @keyframes pulse {
+          0%, 70%, 100% {
+            transform: scale(0.8);
+            opacity: 0.5;
+          }
+          35% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </Box>
+  );
+};
+
+// ========================================
+// src/features/chat/components/MessageInput/MessageInput.tsx (MEJORADO)
+// ========================================
+import React, { useState } from 'react';
+import { TextInput, Button, Group, Box, Container } from '@mantine/core';
+import { IconSend, IconSparkles } from '@tabler/icons-react';
+
+interface MessageInputProps {
+  onSendMessage: (message: string) => void;
+  isLoading: boolean;
+}
+
+export const MessageInput: React.FC<MessageInputProps> = ({
+  onSendMessage,
+  isLoading,
+}) => {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (inputValue.trim() && !isLoading) {
+      onSendMessage(inputValue.trim());
+      setInputValue('');
+    }
+  };
+
+  return (
+    <Box
+      py="lg"
+      style={{
+        borderTop: '1px solid #e5e7eb',
+        background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+        backdropFilter: 'blur(10px)',
+      }}
+    >
+      <Container size="md">
+        <form onSubmit={handleSubmit}>
+          <Group gap="md">
+            <TextInput
+              value={inputValue}
+              onChange={(event) => setInputValue(event.currentTarget.value)}
+              placeholder="Escribe tu mensaje a Tracko..."
+              style={{ flex: 1 }}
+              disabled={isLoading}
+              size="lg"
+              radius="xl"
+              styles={{
+                input: {
+                  border: '2px solid #e5e7eb',
+                  backgroundColor: 'white',
+                  fontSize: '16px',
+                  padding: '16px 20px',
+                  transition: 'all 0.2s ease',
+                  '&:focus': {
+                    borderColor: '#667eea',
+                    boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                    backgroundColor: 'white',
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#f3f4f6',
+                    color: '#9ca3af',
+                    borderColor: '#d1d5db',
+                  },
+                  '&::placeholder': {
+                    color: '#9ca3af',
+                  }
+                },
+              }}
+            />
+            
+            <Button
+              type="submit"
+              loading={isLoading}
+              disabled={!inputValue.trim()}
+              size="lg"
+              radius="xl"
+              style={{
+                minWidth: '60px',
+                height: '56px',
+                background: inputValue.trim() 
+                  ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                  : '#e5e7eb',
+                border: 'none',
+                transition: 'all 0.2s ease',
+                boxShadow: inputValue.trim() 
+                  ? '0 4px 14px rgba(102, 126, 234, 0.3)'
+                  : 'none',
+              }}
+            >
+              {isLoading ? (
+                <IconSparkles size={20} style={{ animation: 'spin 1s linear infinite' }} />
+              ) : (
+                <IconSend size={20} />
+              )}
+            </Button>
+          </Group>
+        </form>
+      </Container>
+      
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </Box>
   );
 };
